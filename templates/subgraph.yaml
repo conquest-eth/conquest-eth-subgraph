@@ -15,11 +15,17 @@ dataSources:
       apiVersion: 0.0.3
       language: wasm/assemblyscript
       entities:
-        - MessageEntry
+        - Planet
       abis:
         - name: OuterSpaceContract
           file: ./abis/OuterSpace.json
       eventHandlers:
-        - event: MessageChanged(indexed address,string)
-          handler: handleMessageChanged
+        - event: PlanetStake(indexed address,indexed uint256,uint256,uint256,uint256)
+          handler: handlePlanetStake
+        - event: FleetSent(indexed address,indexed uint256,uint256,uint256)
+          handler: handleFleetSent
+        - event: FleetArrived(indexed address,indexed uint256,indexed uint256)
+          handler: handleFleetArrived
+        - event: Attack(indexed address,indexed uint256,indexed uint256,uint256,uint256,bool)
+          handler: handleAttack
       file: ./src/mapping.ts

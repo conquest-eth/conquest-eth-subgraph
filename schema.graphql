@@ -1,5 +1,39 @@
-type MessageEntry @entity {
+type NamedEntity @entity {
   id: ID!
-  message: String!
+  name: String!
+}
+
+type AcquiredPlanet @entity {
+  id: ID!
+  owner: Bytes!
+  # location: BigInt! (is the id)
+  lastOwnershipTime: BigInt!
+  numSpaceships: BigInt!
+  lastUpdated: BigInt!
+  productionRate: BigInt!
+  stake: BigInt!
+}
+
+type Fleet @entity {
+  id: ID!
+  owner: Bytes!
+  launchTime: BigInt!
+  from: BigInt!
+  quantity: BigInt!
+}
+
+type AttackResult @entity {
+  id: ID! # fleetId
+  #fleet: Fleet! (is the id)
+  attackerLoss: BigInt!
+  defenderLoss: BigInt!
+  capture: Boolean!
+  timestamp: BigInt!
+}
+
+type ReinforcementArrived @entity {
+  id: ID! # fleetId
+  #fleet: Fleet! (is the id)
+  numSpaceships: BigInt!
   timestamp: BigInt!
 }
