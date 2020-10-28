@@ -1,15 +1,27 @@
-import {store, Address, Bytes, BigInt, BigDecimal} from '@graphprotocol/graph-ts';
 import {
-  OuterSpaceContract,
+  store,
+  // Address,
+  // Bytes,
+  // BigInt,
+  // BigDecimal,
+} from '@graphprotocol/graph-ts';
+import {
+  // OuterSpaceContract,
   PlanetStake,
   FleetSent,
   FleetArrived,
   Attack,
 } from '../generated/OuterSpace/OuterSpaceContract';
-import {NamedEntity, AcquiredPlanet, AttackResult, Fleet, ReinforcementArrived} from '../generated/schema';
-import {log} from '@graphprotocol/graph-ts';
+import {
+  // NamedEntity,
+  AcquiredPlanet,
+  AttackResult,
+  Fleet,
+  ReinforcementArrived,
+} from '../generated/schema';
+// import {log} from '@graphprotocol/graph-ts';
 
-const zeroAddress = '0x0000000000000000000000000000000000000000';
+// const zeroAddress = '0x0000000000000000000000000000000000000000';
 
 export function handlePlanetStake(event: PlanetStake): void {
   const id = event.params.location.toHex();
@@ -57,7 +69,9 @@ export function handleFleetArrived(event: FleetArrived): void {
     planetEntity.owner = fleetEntity.owner; // this should never happen, onwer can only be set in stake or attack
     planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
   }
-  planetEntity.numSpaceships = planetEntity.numSpaceships.plus(fleetEntity.quantity);
+  planetEntity.numSpaceships = planetEntity.numSpaceships.plus(
+    fleetEntity.quantity
+  );
   planetEntity.save();
 
   store.remove('Fleet', id);
@@ -84,9 +98,13 @@ export function handleAttack(event: Attack): void {
   }
 
   if (event.params.won) {
-    planetEntity.numSpaceships = fleetEntity.quantity.minus(event.params.fleetLoss);
+    planetEntity.numSpaceships = fleetEntity.quantity.minus(
+      event.params.fleetLoss
+    );
   } else {
-    planetEntity.numSpaceships = planetEntity.numSpaceships.minus(event.params.toLoss);
+    planetEntity.numSpaceships = planetEntity.numSpaceships.minus(
+      event.params.toLoss
+    );
   }
   planetEntity.save();
 
