@@ -12,6 +12,15 @@ type AcquiredPlanet @entity {
   lastUpdated: BigInt!
   productionRate: BigInt!
   stake: BigInt!
+  zone: String!
+
+  # TODO remove ------------
+  x: BigInt!
+  y: BigInt!
+
+  zoneX: BigInt!
+  zoneY: BigInt!
+  # ----------------------
 }
 
 type Fleet @entity {
