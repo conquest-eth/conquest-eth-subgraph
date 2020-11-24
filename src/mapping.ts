@@ -206,6 +206,8 @@ export function handleFleetArrived(event: FleetArrived): void {
   planetEntity.numSpaceships = planetEntity.numSpaceships.plus(
     fleetEntity.quantity
   );
+
+  planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
 
   store.remove('Fleet', id);
@@ -234,7 +236,13 @@ export function handleAttack(event: Attack): void {
     planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
   }
 
+  if (event.params.won) {
+    planetEntity.owner = fleetEntity.owner;
+    planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
+  }
+
   planetEntity.numSpaceships = event.params.newNumspaceships;
+  planetEntity.lastUpdated = event.block.timestamp;
 
   planetEntity.save();
 
