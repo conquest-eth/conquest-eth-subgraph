@@ -96,8 +96,6 @@ export function handlePlanetStake(event: PlanetStake): void {
   // entity.location = event.params.location;
   entity.numSpaceships = event.params.numSpaceships;
   entity.lastUpdated = event.block.timestamp;
-  entity.productionRate = event.params.productionRate;
-  entity.stake = event.params.newStake;
   const yString = id.slice(0, 34);
   const xString = '0x' + id.slice(34);
 

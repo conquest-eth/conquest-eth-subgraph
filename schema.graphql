@@ -10,8 +10,6 @@ type AcquiredPlanet @entity {
   lastOwnershipTime: BigInt!
   numSpaceships: BigInt!
   lastUpdated: BigInt!
-  productionRate: BigInt!
-  stake: BigInt!
   zone: String!
 
   # TODO remove ------------
