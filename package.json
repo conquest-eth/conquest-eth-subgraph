@@ -12,12 +12,13 @@
     "fs-extra": "^9.0.0",
     "handlebars": "^4.7.6",
     "npm-run-all": "^4.1.5",
+    "rimraf": "^3.0.2",
     "wait-on": "^4.0.1"
   },
   "scripts": {
     "local:create:silent": "dotenv -- cross-var graph create $SUBGRAPH_NAME --node http://$LOCAL_GRAPH_NODE_API || true",
     "local:setup": "dotenv -- cross-var wait-on http-get://$LOCAL_GRAPH_NODE_GRAPHQL && npm run local:create:silent",
-    "codegen": "rm -Rf generated && graph codegen",
+    "codegen": "rimraf generated && graph codegen",
     "build": "graph build",
     "generate": "node scripts/generate.js",
     "watch": "node scripts/watch.js",

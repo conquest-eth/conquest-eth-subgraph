@@ -28,4 +28,8 @@ dataSources:
           handler: handleFleetArrived
         - event: Attack(indexed address,indexed uint256,indexed uint256,uint32,uint32,bool,uint32)
           handler: handleAttack
+        - event: PlanetExit(indexed address,indexed uint256)
+          handler: handleExit
+        - event: StakeToWithdraw(indexed address,uint256)
+          handler: handleStakeToWithdraw
       file: ./src/mapping.ts

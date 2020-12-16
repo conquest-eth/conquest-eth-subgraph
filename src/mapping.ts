@@ -12,6 +12,8 @@ import {
   FleetSent,
   FleetArrived,
   Attack,
+  StakeToWithdraw,
+  PlanetExit,
 } from '../generated/OuterSpace/OuterSpaceContract';
 import {
   // NamedEntity,
@@ -22,7 +24,10 @@ import {
 } from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
-// const zeroAddress = '0x0000000000000000000000000000000000000000';
+const ZERO_ADDRESS: Bytes = Bytes.fromHexString(
+  '0x0000000000000000000000000000000000000000'
+) as Bytes;
+const ZERO = BigInt.fromI32(0);
 
 function flipHex(str: string): string {
   let newStr = '0x';
@@ -95,6 +100,8 @@ export function handlePlanetStake(event: PlanetStake): void {
   // entity.location = event.params.location;
   entity.numSpaceships = event.params.numSpaceships;
   entity.lastUpdated = event.block.timestamp;
+  entity.exitTime = ZERO;
+
   const yString = id.slice(0, 34);
   const xString = '0x' + id.slice(34);
 
@@ -163,76 +170,81 @@ export function handlePlanetStake(event: PlanetStake): void {
 }
 
 export function handleFleetSent(event: FleetSent): void {
-  const id = event.params.fleet.toString();
-  let entity = Fleet.load(id);
-  if (!entity) {
-    entity = new Fleet(id);
+  const fleetId = event.params.fleet.toString();
+
+  let fleetEntity = Fleet.load(fleetId);
+  if (!fleetEntity) {
+    fleetEntity = new Fleet(fleetId);
   }
-  entity.owner = event.params.sender;
-  entity.launchTime = event.block.timestamp;
-  entity.from = event.params.from;
-  entity.quantity = event.params.quantity;
-  entity.save();
+  fleetEntity.owner = event.params.sender;
+  fleetEntity.launchTime = event.block.timestamp;
+  fleetEntity.from = event.params.from;
+  fleetEntity.quantity = event.params.quantity;
+  fleetEntity.save();
 
   const planetId = '0x' + event.params.from.toHex().slice(2).padStart(64, '0');
-  const planetEntity = AcquiredPlanet.load(planetId);
+
+  let planetEntity = AcquiredPlanet.load(planetId);
+  if (!planetEntity) {
+    planetEntity = new AcquiredPlanet(planetId);
+    log.error('planet never acquired: {}', [planetId]); // this should never happen, no fleet can come from an planet that was not acquired
+  }
   planetEntity.numSpaceships = event.params.newNumSpaceships;
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
 }
 
 export function handleFleetArrived(event: FleetArrived): void {
-  const id = event.params.fleet.toString();
-  let entity = ReinforcementArrived.load(id);
-  if (!entity) {
-    entity = new ReinforcementArrived(id);
+  const fleetId = event.params.fleet.toString();
+  let reinforcementEntity = ReinforcementArrived.load(fleetId);
+  if (!reinforcementEntity) {
+    reinforcementEntity = new ReinforcementArrived(fleetId);
   }
-  const fleetEntity = Fleet.load(id);
-  entity.numSpaceships = fleetEntity.quantity;
-  entity.timestamp = event.block.timestamp;
-  entity.save();
+  const fleetEntity = Fleet.load(fleetId);
+  reinforcementEntity.numSpaceships = fleetEntity.quantity;
+  reinforcementEntity.timestamp = event.block.timestamp;
+  reinforcementEntity.save();
 
   const planetId =
     '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
   let planetEntity = AcquiredPlanet.load(planetId);
   if (!planetEntity) {
     planetEntity = new AcquiredPlanet(planetId);
-    planetEntity.owner = fleetEntity.owner; // this should never happen, onwer can only be set in stake or attack
+    log.error('planet never acquired: {}', [planetId]); // this should never happen, onwer can only be set in stake or attack
   }
-  planetEntity.numSpaceships = planetEntity.numSpaceships.plus(
-    fleetEntity.quantity
-  );
-
+  planetEntity.numSpaceships = event.params.newNumspaceships;
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
 
-  store.remove('Fleet', id);
+  store.remove('Fleet', fleetId);
 }
 
 export function handleAttack(event: Attack): void {
-  const id = event.params.fleet.toString();
-  let entity = AttackResult.load(id);
-  if (!entity) {
-    entity = new AttackResult(id);
+  const fleetId = event.params.fleet.toString();
+  let attackResultEntity = AttackResult.load(fleetId);
+  if (!attackResultEntity) {
+    attackResultEntity = new AttackResult(fleetId);
   }
-  const fleetEntity = Fleet.load(id);
-  entity.attackerLoss = event.params.fleetLoss;
-  entity.defenderLoss = event.params.toLoss;
-  entity.capture = event.params.won;
-  entity.timestamp = event.block.timestamp;
-  entity.save();
+  attackResultEntity.attackerLoss = event.params.fleetLoss;
+  attackResultEntity.defenderLoss = event.params.toLoss;
+  attackResultEntity.capture = event.params.won;
+  attackResultEntity.timestamp = event.block.timestamp;
+  attackResultEntity.save();
 
+  const fleetEntity = Fleet.load(fleetId);
   const planetId =
     '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
 
   let planetEntity = AcquiredPlanet.load(planetId);
   if (!planetEntity) {
+    // TODO handle natives successful
     planetEntity = new AcquiredPlanet(planetId);
-    planetEntity.owner = fleetEntity.owner;
+    planetEntity.owner = ZERO_ADDRESS;
   }
 
   if (event.params.won) {
     planetEntity.owner = fleetEntity.owner;
+    planetEntity.exitTime = ZERO;
   }
 
   planetEntity.numSpaceships = event.params.newNumspaceships;
@@ -240,5 +252,22 @@ export function handleAttack(event: Attack): void {
 
   planetEntity.save();
 
-  store.remove('Fleet', id);
+  store.remove('Fleet', fleetId);
+}
+
+export function handleExit(event: PlanetExit): void {
+  const planetId =
+    '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
+
+  let planetEntity = AcquiredPlanet.load(planetId);
+  if (!planetEntity) {
+    planetEntity = new AcquiredPlanet(planetId);
+    log.error('planet never acquired: {}', [planetId]); // this should never happen, exit can only happen when acquired
+  }
+  planetEntity.exitTime = event.block.timestamp;
+  planetEntity.save();
+}
+
+export function handleStakeToWithdraw(event: StakeToWithdraw): void {
+  // TODO Stake
 }

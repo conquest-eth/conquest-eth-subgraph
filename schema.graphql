@@ -3,13 +3,15 @@ type NamedEntity @entity {
   name: String!
 }
 
+# TODO rename to Planet:
 type AcquiredPlanet @entity {
   id: ID!
-  owner: Bytes!
-  # location: BigInt! (is the id)
+  owner: Bytes! # TODO Owner type with id and virtual planets
   numSpaceships: BigInt!
   lastUpdated: BigInt!
   zone: String!
+  # area: String! ?
+  exitTime: BigInt!
 
   # TODO remove ------------
   x: BigInt!
@@ -22,7 +24,7 @@ type AcquiredPlanet @entity {
 
 type Fleet @entity {
   id: ID!
-  owner: Bytes!
+  owner: Bytes! # TODO Owner type with id and virtual planets
   launchTime: BigInt!
   from: BigInt!
   quantity: BigInt!
