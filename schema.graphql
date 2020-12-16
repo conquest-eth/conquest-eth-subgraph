@@ -7,7 +7,6 @@ type AcquiredPlanet @entity {
   id: ID!
   owner: Bytes!
   # location: BigInt! (is the id)
-  lastOwnershipTime: BigInt!
   numSpaceships: BigInt!
   lastUpdated: BigInt!
   zone: String!

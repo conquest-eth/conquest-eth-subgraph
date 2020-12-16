@@ -91,7 +91,6 @@ export function handlePlanetStake(event: PlanetStake): void {
   if (!entity) {
     entity = new AcquiredPlanet(id);
   }
-  entity.lastOwnershipTime = event.block.timestamp; // reset clock
   entity.owner = event.params.acquirer;
   // entity.location = event.params.location;
   entity.numSpaceships = event.params.numSpaceships;
@@ -199,7 +198,6 @@ export function handleFleetArrived(event: FleetArrived): void {
   if (!planetEntity) {
     planetEntity = new AcquiredPlanet(planetId);
     planetEntity.owner = fleetEntity.owner; // this should never happen, onwer can only be set in stake or attack
-    planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
   }
   planetEntity.numSpaceships = planetEntity.numSpaceships.plus(
     fleetEntity.quantity
@@ -231,12 +229,10 @@ export function handleAttack(event: Attack): void {
   if (!planetEntity) {
     planetEntity = new AcquiredPlanet(planetId);
     planetEntity.owner = fleetEntity.owner;
-    planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
   }
 
   if (event.params.won) {
     planetEntity.owner = fleetEntity.owner;
-    planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
   }
 
   planetEntity.numSpaceships = event.params.newNumspaceships;
