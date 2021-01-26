@@ -268,6 +268,7 @@ export function handleExit(event: PlanetExit): void {
   planetEntity.save();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function handleStakeToWithdraw(event: StakeToWithdraw): void {
   // TODO Stake
 }
