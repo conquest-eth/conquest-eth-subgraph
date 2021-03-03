@@ -11,7 +11,6 @@ import {
   PlanetStake,
   FleetSent,
   FleetArrived,
-  Attack,
   StakeToWithdraw,
   PlanetExit,
 } from '../generated/OuterSpace/OuterSpaceContract';
@@ -196,63 +195,63 @@ export function handleFleetSent(event: FleetSent): void {
 
 export function handleFleetArrived(event: FleetArrived): void {
   const fleetId = event.params.fleet.toString();
-  let reinforcementEntity = ReinforcementArrived.load(fleetId);
-  if (!reinforcementEntity) {
-    reinforcementEntity = new ReinforcementArrived(fleetId);
+  if (event.params.fleetLoss.equals(ZERO) && event.params.toLoss.equals(ZERO)) {
+    let reinforcementEntity = ReinforcementArrived.load(fleetId);
+    if (!reinforcementEntity) {
+      reinforcementEntity = new ReinforcementArrived(fleetId);
+    }
+    const fleetEntity = Fleet.load(fleetId);
+    reinforcementEntity.numSpaceships = fleetEntity.quantity;
+    reinforcementEntity.timestamp = event.block.timestamp;
+    reinforcementEntity.save();
+
+    const planetId =
+      '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
+    let planetEntity = AcquiredPlanet.load(planetId);
+    if (!planetEntity) {
+      planetEntity = new AcquiredPlanet(planetId);
+      log.error('planet never acquired: {}', [planetId]); // this should never happen, onwer can only be set in stake or attack
+    }
+    planetEntity.numSpaceships = event.params.newNumspaceships;
+    planetEntity.lastUpdated = event.block.timestamp;
+    planetEntity.save();
+
+    store.remove('Fleet', fleetId);
+  } else {
+    const fleetId = event.params.fleet.toString();
+    let attackResultEntity = AttackResult.load(fleetId);
+    if (!attackResultEntity) {
+      attackResultEntity = new AttackResult(fleetId);
+    }
+    attackResultEntity.attackerLoss = event.params.fleetLoss;
+    attackResultEntity.defenderLoss = event.params.toLoss;
+    attackResultEntity.capture = event.params.won;
+    attackResultEntity.timestamp = event.block.timestamp;
+    attackResultEntity.save();
+
+    const fleetEntity = Fleet.load(fleetId);
+    const planetId =
+      '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
+
+    let planetEntity = AcquiredPlanet.load(planetId);
+    if (!planetEntity) {
+      // TODO handle natives successful
+      planetEntity = new AcquiredPlanet(planetId);
+      planetEntity.owner = ZERO_ADDRESS;
+    }
+
+    if (event.params.won) {
+      planetEntity.owner = fleetEntity.owner;
+      planetEntity.exitTime = ZERO;
+    }
+
+    planetEntity.numSpaceships = event.params.newNumspaceships;
+    planetEntity.lastUpdated = event.block.timestamp;
+
+    planetEntity.save();
+
+    store.remove('Fleet', fleetId);
   }
-  const fleetEntity = Fleet.load(fleetId);
-  reinforcementEntity.numSpaceships = fleetEntity.quantity;
-  reinforcementEntity.timestamp = event.block.timestamp;
-  reinforcementEntity.save();
-
-  const planetId =
-    '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
-  let planetEntity = AcquiredPlanet.load(planetId);
-  if (!planetEntity) {
-    planetEntity = new AcquiredPlanet(planetId);
-    log.error('planet never acquired: {}', [planetId]); // this should never happen, onwer can only be set in stake or attack
-  }
-  planetEntity.numSpaceships = event.params.newNumspaceships;
-  planetEntity.lastUpdated = event.block.timestamp;
-  planetEntity.save();
-
-  store.remove('Fleet', fleetId);
-}
-
-export function handleAttack(event: Attack): void {
-  const fleetId = event.params.fleet.toString();
-  let attackResultEntity = AttackResult.load(fleetId);
-  if (!attackResultEntity) {
-    attackResultEntity = new AttackResult(fleetId);
-  }
-  attackResultEntity.attackerLoss = event.params.fleetLoss;
-  attackResultEntity.defenderLoss = event.params.toLoss;
-  attackResultEntity.capture = event.params.won;
-  attackResultEntity.timestamp = event.block.timestamp;
-  attackResultEntity.save();
-
-  const fleetEntity = Fleet.load(fleetId);
-  const planetId =
-    '0x' + event.params.location.toHex().slice(2).padStart(64, '0');
-
-  let planetEntity = AcquiredPlanet.load(planetId);
-  if (!planetEntity) {
-    // TODO handle natives successful
-    planetEntity = new AcquiredPlanet(planetId);
-    planetEntity.owner = ZERO_ADDRESS;
-  }
-
-  if (event.params.won) {
-    planetEntity.owner = fleetEntity.owner;
-    planetEntity.exitTime = ZERO;
-  }
-
-  planetEntity.numSpaceships = event.params.newNumspaceships;
-  planetEntity.lastUpdated = event.block.timestamp;
-
-  planetEntity.save();
-
-  store.remove('Fleet', fleetId);
 }
 
 export function handleExit(event: PlanetExit): void {
