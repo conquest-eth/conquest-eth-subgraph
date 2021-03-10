@@ -195,7 +195,11 @@ export function handleFleetSent(event: FleetSent): void {
 
 export function handleFleetArrived(event: FleetArrived): void {
   const fleetId = event.params.fleet.toString();
-  if (event.params.fleetLoss.equals(ZERO) && event.params.toLoss.equals(ZERO)) {
+  if (
+    event.params.fleetLoss.equals(ZERO) &&
+    event.params.toLoss.equals(ZERO) &&
+    !event.params.won
+  ) {
     let reinforcementEntity = ReinforcementArrived.load(fleetId);
     if (!reinforcementEntity) {
       reinforcementEntity = new ReinforcementArrived(fleetId);
