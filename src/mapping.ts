@@ -8,6 +8,7 @@ import {
   toPlanetId,
   toOwnerId,
   toFleetId,
+  toEventId,
 } from './utils';
 import {
   PlanetStake,
@@ -16,7 +17,14 @@ import {
   StakeToWithdraw,
   PlanetExit,
 } from '../generated/OuterSpace/OuterSpaceContract';
-import {Planet, Fleet, Owner} from '../generated/schema';
+import {
+  Planet,
+  Fleet,
+  Owner,
+  FleetSentEvent,
+  FleetArrivedEvent,
+  PlanetExitEvent,
+} from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
 function getOrCreatePlanet(id: string): Planet {
@@ -106,8 +114,10 @@ export function handlePlanetStake(event: PlanetStake): void {
   entity.owner = owner.id;
   entity.numSpaceships = event.params.numSpaceships;
   entity.lastUpdated = event.block.timestamp;
-  entity.firstAcquired = event.block.timestamp;
-  entity.lastAcquired = event.block.timestamp; // TODO update it
+  if (!entity.firstAcquired || entity.firstAcquired.equals(ZERO)) {
+    entity.firstAcquired = event.block.timestamp;
+  }
+  entity.lastAcquired = event.block.timestamp;
   entity.exitTime = ZERO;
   entity.save();
 }
@@ -115,10 +125,14 @@ export function handlePlanetStake(event: PlanetStake): void {
 export function handleFleetSent(event: FleetSent): void {
   let fleetId = toFleetId(event.params.fleet);
 
-  let fleetEntity = Fleet.load(fleetId);
-  if (!fleetEntity) {
-    fleetEntity = new Fleet(fleetId);
+  // ---------------- LOG ----------------------------
+  let existingFleet = Fleet.load(fleetId);
+  if (existingFleet) {
+    log.error('fleet already exist: {}', [fleetId]);
   }
+  // --------------------------------------------------
+
+  let fleetEntity = new Fleet(fleetId);
 
   let planetEntity = getOrCreatePlanet(toPlanetId(event.params.from)); // TODO should be created by now, should we error out if not ?
   planetEntity.numSpaceships = event.params.newNumSpaceships;
@@ -131,43 +145,67 @@ export function handleFleetSent(event: FleetSent): void {
   fleetEntity.from = planetEntity.id;
   fleetEntity.quantity = event.params.quantity;
   fleetEntity.save();
+
+  let fleetSendEvent = new FleetSentEvent(toEventId(event));
+  fleetSendEvent.blockNumber = event.block.number.toI32();
+  fleetSendEvent.timestamp = event.block.timestamp;
+  fleetSendEvent.transactionID = event.transaction.hash;
+  fleetSendEvent.owner = sender.id;
+  fleetSendEvent.planet = planetEntity.id;
+  fleetSendEvent.fleet = fleetId;
+  fleetSendEvent.newNumSpaceships = event.params.newNumSpaceships;
+  fleetSendEvent.quantity = event.params.quantity;
+  fleetSendEvent.save();
 }
 
 export function handleFleetArrived(event: FleetArrived): void {
   let fleetId = toFleetId(event.params.fleet);
+  let planetId = toPlanetId(event.params.destination);
+  let planetEntity = getOrCreatePlanet(planetId);
+  let fleetEntity = Fleet.load(fleetId);
+  let sender = handleOwner(event.params.fleetOwner);
+  let destinationOwner = handleOwner(event.params.destinationOwner);
   if (
     event.params.fleetLoss.equals(ZERO) &&
     event.params.planetLoss.equals(ZERO) &&
     !event.params.won
   ) {
-    // let fleetEntity = Fleet.load(fleetId);
-    let planetId = toPlanetId(event.params.destination);
-    let planetEntity = getOrCreatePlanet(planetId);
-    // TODO ... fields
+    // reinforcement
     planetEntity.numSpaceships = event.params.newNumspaceships;
     planetEntity.lastUpdated = event.block.timestamp;
     planetEntity.save();
-
-    // store.remove('Fleet', fleetId); // TODO remove ?
   } else {
-    let fleetEntity = Fleet.load(fleetId);
-    let planetId = toPlanetId(event.params.destination);
-    let planetEntity = getOrCreatePlanet(planetId);
-    // TODO ... fields
+    // capture
     planetEntity.owner = ZERO_ADDRESS.toHex();
     if (event.params.won) {
       planetEntity.owner = fleetEntity.owner;
-      planetEntity.exitTime = ZERO;
+      planetEntity.exitTime = ZERO; // disable exit on capture
     }
     planetEntity.numSpaceships = event.params.newNumspaceships;
     planetEntity.lastUpdated = event.block.timestamp;
+    planetEntity.lastAcquired = event.block.timestamp;
     planetEntity.save();
-
-    // store.remove('Fleet', fleetId); // TODO remove ?
   }
+
+  let fleetArrivedEvent = new FleetArrivedEvent(toEventId(event));
+  fleetArrivedEvent.blockNumber = event.block.number.toI32();
+  fleetArrivedEvent.timestamp = event.block.timestamp;
+  fleetArrivedEvent.transactionID = event.transaction.hash;
+  fleetArrivedEvent.owner = sender.id;
+  fleetArrivedEvent.planet = planetEntity.id;
+  fleetArrivedEvent.fleet = fleetId;
+  fleetArrivedEvent.destinationOwner = destinationOwner.id;
+  fleetArrivedEvent.fleetLoss = event.params.fleetLoss;
+  fleetArrivedEvent.planetLoss = event.params.planetLoss;
+  fleetArrivedEvent.inFlightFleetLoss = event.params.inFlightFleetLoss;
+  fleetArrivedEvent.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
+  fleetArrivedEvent.won = event.params.won;
+  fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships; // TODO rename
+  fleetArrivedEvent.save();
 }
 
 export function handleExit(event: PlanetExit): void {
+  let owner = handleOwner(event.params.owner);
   let planetId = toPlanetId(event.params.location);
   let planetEntity = Planet.load(planetId);
   if (!planetEntity) {
@@ -176,6 +214,15 @@ export function handleExit(event: PlanetExit): void {
   }
   planetEntity.exitTime = event.block.timestamp;
   planetEntity.save();
+
+  let planetExitEvent = new PlanetExitEvent(toEventId(event));
+  planetExitEvent.blockNumber = event.block.number.toI32();
+  planetExitEvent.timestamp = event.block.timestamp;
+  planetExitEvent.transactionID = event.transaction.hash;
+  planetExitEvent.owner = owner.id;
+  planetExitEvent.planet = planetEntity.id;
+  planetExitEvent.exitTime = event.block.timestamp;
+  planetExitEvent.save();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
