@@ -1,15 +1,6 @@
 /* eslint-disable */
 import {store, BigInt, Address} from '@graphprotocol/graph-ts';
-import {
-  flipHex,
-  c2,
-  ZERO,
-  ZERO_ADDRESS,
-  toPlanetId,
-  toOwnerId,
-  toFleetId,
-  toEventId,
-} from './utils';
+import {flipHex, c2, ZERO, ZERO_ADDRESS, toPlanetId, toOwnerId, toFleetId, toEventId} from './utils';
 import {
   PlanetStake,
   FleetSent,
@@ -17,14 +8,7 @@ import {
   StakeToWithdraw,
   PlanetExit,
 } from '../generated/OuterSpace/OuterSpaceContract';
-import {
-  Planet,
-  Fleet,
-  Owner,
-  FleetSentEvent,
-  FleetArrivedEvent,
-  PlanetExitEvent,
-} from '../generated/schema';
+import {Planet, Fleet, Owner, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent} from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
 function getOrCreatePlanet(id: string): Planet {
@@ -33,54 +17,34 @@ function getOrCreatePlanet(id: string): Planet {
     return entity as Planet;
   }
   entity = new Planet(id);
+  entity.firstAcquired = ZERO;
+
   let yString = id.slice(0, 34);
   let xString = '0x' + id.slice(34);
 
   let x = c2(xString);
   let absX = x.abs();
-  let signX = x.lt(BigInt.fromI32(-32))
-    ? BigInt.fromI32(-1)
-    : BigInt.fromI32(1);
+  let signX = x.lt(BigInt.fromI32(-32)) ? BigInt.fromI32(-1) : BigInt.fromI32(1);
   // log.error('(x,y): ({},{})', [xString, yString]);
   let centerZoneX = absX.plus(BigInt.fromI32(32)).div(BigInt.fromI32(64));
   let centerZoneXString = signX.equals(BigInt.fromI32(1))
     ? centerZoneX.toHex().slice(2).padStart(32, '0')
-    : flipHex(
-        '0x' +
-          centerZoneX
-            .minus(BigInt.fromI32(1))
-            .toHexString()
-            .slice(2)
-            .padStart(32, '0')
-      ).slice(2);
+    : flipHex('0x' + centerZoneX.minus(BigInt.fromI32(1)).toHexString().slice(2).padStart(32, '0')).slice(2);
 
   let y = c2(yString);
   let absY = y.abs();
-  let signY = y.lt(BigInt.fromI32(-32))
-    ? BigInt.fromI32(-1)
-    : BigInt.fromI32(1);
+  let signY = y.lt(BigInt.fromI32(-32)) ? BigInt.fromI32(-1) : BigInt.fromI32(1);
   let centerZoneY = absY.plus(BigInt.fromI32(32)).div(BigInt.fromI32(64));
   let centerZoneYString = signY.equals(BigInt.fromI32(1))
     ? centerZoneY.toHex().slice(2).padStart(32, '0')
-    : flipHex(
-        '0x' +
-          centerZoneY
-            .minus(BigInt.fromI32(1))
-            .toHex()
-            .slice(2)
-            .padStart(32, '0')
-      ).slice(2);
+    : flipHex('0x' + centerZoneY.minus(BigInt.fromI32(1)).toHex().slice(2).padStart(32, '0')).slice(2);
   entity.zone = '0x' + centerZoneYString + centerZoneXString;
 
   // TODO remove :
   entity.x = x;
   entity.y = y;
-  entity.zoneX = signX.equals(BigInt.fromI32(1))
-    ? centerZoneX
-    : centerZoneX.neg();
-  entity.zoneY = signY.equals(BigInt.fromI32(1))
-    ? centerZoneY
-    : centerZoneY.neg();
+  entity.zoneX = signX.equals(BigInt.fromI32(1)) ? centerZoneX : centerZoneX.neg();
+  entity.zoneY = signY.equals(BigInt.fromI32(1)) ? centerZoneY : centerZoneY.neg();
 
   log.error('zone: {}', [entity.zone]);
 
@@ -114,7 +78,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   entity.owner = owner.id;
   entity.numSpaceships = event.params.numSpaceships;
   entity.lastUpdated = event.block.timestamp;
-  if (!entity.firstAcquired || entity.firstAcquired.equals(ZERO)) {
+  if (entity.firstAcquired.equals(ZERO)) {
     entity.firstAcquired = event.block.timestamp;
   }
   entity.lastAcquired = event.block.timestamp;
@@ -124,28 +88,23 @@ export function handlePlanetStake(event: PlanetStake): void {
 
 export function handleFleetSent(event: FleetSent): void {
   let fleetId = toFleetId(event.params.fleet);
-
   // ---------------- LOG ----------------------------
   let existingFleet = Fleet.load(fleetId);
   if (existingFleet) {
     log.error('fleet already exist: {}', [fleetId]);
   }
   // --------------------------------------------------
-
   let fleetEntity = new Fleet(fleetId);
-
   let planetEntity = getOrCreatePlanet(toPlanetId(event.params.from)); // TODO should be created by now, should we error out if not ?
   planetEntity.numSpaceships = event.params.newNumSpaceships;
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
-
   let sender = handleOwner(event.params.fleetOwner);
   fleetEntity.owner = sender.id;
   fleetEntity.launchTime = event.block.timestamp;
   fleetEntity.from = planetEntity.id;
   fleetEntity.quantity = event.params.quantity;
   fleetEntity.save();
-
   let fleetSendEvent = new FleetSentEvent(toEventId(event));
   fleetSendEvent.blockNumber = event.block.number.toI32();
   fleetSendEvent.timestamp = event.block.timestamp;
@@ -165,18 +124,15 @@ export function handleFleetArrived(event: FleetArrived): void {
   let fleetEntity = Fleet.load(fleetId);
   let sender = handleOwner(event.params.fleetOwner);
   let destinationOwner = handleOwner(event.params.destinationOwner);
-  if (
-    event.params.fleetLoss.equals(ZERO) &&
-    event.params.planetLoss.equals(ZERO) &&
-    !event.params.won
-  ) {
+  // TODO handle sending to empty planets
+  if (event.params.fleetLoss.equals(ZERO) && event.params.planetLoss.equals(ZERO) && !event.params.won) {
     // reinforcement
     planetEntity.numSpaceships = event.params.newNumspaceships;
     planetEntity.lastUpdated = event.block.timestamp;
     planetEntity.save();
   } else {
     // capture
-    planetEntity.owner = ZERO_ADDRESS.toHex();
+
     if (event.params.won) {
       planetEntity.owner = fleetEntity.owner;
       planetEntity.exitTime = ZERO; // disable exit on capture
@@ -214,7 +170,6 @@ export function handleExit(event: PlanetExit): void {
   }
   planetEntity.exitTime = event.block.timestamp;
   planetEntity.save();
-
   let planetExitEvent = new PlanetExitEvent(toEventId(event));
   planetExitEvent.blockNumber = event.block.number.toI32();
   planetExitEvent.timestamp = event.block.timestamp;
