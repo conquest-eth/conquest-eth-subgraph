@@ -31,3 +31,23 @@ dataSources:
         - event: StakeToWithdraw(indexed address,uint256)
           handler: handleStakeToWithdraw
       file: ./src/mapping.ts
+  - kind: ethereum/contract
+    name: PlayToken_L2
+    network: {{chainName}}
+    source:
+      address: '{{contracts.PlayToken_L2.address}}'
+      abi: PlayToken_L2_Contract
+      startBlock: {{contracts.PlayToken_L2.receipt.blockNumber}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Owner
+      abis:
+        - name: PlayToken_L2_Contract
+          file: ./abis/PlayToken_L2.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handlePlayTokenTransfer
+      file: ./src/mapping.ts

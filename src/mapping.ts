@@ -8,6 +8,7 @@ import {
   StakeToWithdraw,
   PlanetExit,
 } from '../generated/OuterSpace/OuterSpaceContract';
+import {Transfer} from '../generated/PlayToken_L2/PlayToken_L2_Contract';
 import {Planet, Fleet, Owner, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent} from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
@@ -179,4 +180,18 @@ export function handleStakeToWithdraw(event: StakeToWithdraw): void {
   let owner = handleOwner(event.params.owner);
   owner.playTokenToWithdraw = event.params.newStake;
   owner.save();
+}
+
+export function handlePlayTokenTransfer(event: Transfer): void {
+  if (!event.params.from.equals(ZERO_ADDRESS)) {
+    let from = handleOwner(event.params.from);
+    from.playTokenBalance = from.playTokenBalance.minus(event.params.value);
+    from.save();
+  }
+
+  if (!event.params.to.equals(ZERO_ADDRESS)) {
+    let to = handleOwner(event.params.to);
+    to.playTokenBalance = to.playTokenBalance.plus(event.params.value);
+    to.save();
+  }
 }
