@@ -3,7 +3,8 @@ type Owner @entity {
   planets: [Planet!]! @derivedFrom(field: "owner")
   fleets: [Fleet!]! @derivedFrom(field: "owner")
   events: [OwnerEvent!]! @derivedFrom(field: "owner")
-  # TODO tokenBalance: BigInt!
+  playTokenBalance: BigInt!
+  playTokenToWithdraw: BigInt!
 }
 
 type Planet @entity {
@@ -81,8 +82,7 @@ type PlanetExitEvent implements OwnerEvent & PlanetEvent @entity {
   exitTime: BigInt!
 }
 
-type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent
-  @entity {
+type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!

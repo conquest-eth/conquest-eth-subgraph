@@ -66,6 +66,8 @@ function handleOwner(address: Address): Owner {
     return entity as Owner;
   }
   entity = new Owner(id);
+  entity.playTokenToWithdraw = ZERO;
+  entity.playTokenBalance = ZERO;
   entity.save();
   return entity as Owner;
 }
@@ -124,24 +126,16 @@ export function handleFleetArrived(event: FleetArrived): void {
   let fleetEntity = Fleet.load(fleetId);
   let sender = handleOwner(event.params.fleetOwner);
   let destinationOwner = handleOwner(event.params.destinationOwner);
-  // TODO handle sending to empty planets
-  if (event.params.fleetLoss.equals(ZERO) && event.params.planetLoss.equals(ZERO) && !event.params.won) {
-    // reinforcement
-    planetEntity.numSpaceships = event.params.newNumspaceships;
-    planetEntity.lastUpdated = event.block.timestamp;
-    planetEntity.save();
-  } else {
-    // capture
 
-    if (event.params.won) {
-      planetEntity.owner = fleetEntity.owner;
-      planetEntity.exitTime = ZERO; // disable exit on capture
-    }
-    planetEntity.numSpaceships = event.params.newNumspaceships;
-    planetEntity.lastUpdated = event.block.timestamp;
+  planetEntity.numSpaceships = event.params.newNumspaceships;
+  planetEntity.lastUpdated = event.block.timestamp;
+  if (event.params.won) {
+    planetEntity.owner = fleetEntity.owner;
     planetEntity.lastAcquired = event.block.timestamp;
-    planetEntity.save();
+    planetEntity.exitTime = ZERO; // disable exit on capture
   }
+
+  planetEntity.save();
 
   let fleetArrivedEvent = new FleetArrivedEvent(toEventId(event));
   fleetArrivedEvent.blockNumber = event.block.number.toI32();
@@ -182,5 +176,7 @@ export function handleExit(event: PlanetExit): void {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function handleStakeToWithdraw(event: StakeToWithdraw): void {
-  // TODO Stake
+  let owner = handleOwner(event.params.owner);
+  owner.playTokenToWithdraw = event.params.newStake;
+  owner.save();
 }
