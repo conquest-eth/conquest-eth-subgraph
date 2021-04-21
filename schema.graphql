@@ -3,6 +3,9 @@ type Owner @entity {
   planets: [Planet!]! @derivedFrom(field: "owner")
   fleets: [Fleet!]! @derivedFrom(field: "owner")
   events: [OwnerEvent!]! @derivedFrom(field: "owner")
+  totalStaked: BigInt!
+  currentStake: BigInt!
+  totalCollected: BigInt!
   playTokenBalance: BigInt!
   playTokenToWithdraw: BigInt!
 }

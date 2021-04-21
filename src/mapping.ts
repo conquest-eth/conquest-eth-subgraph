@@ -7,6 +7,7 @@ import {
   FleetArrived,
   StakeToWithdraw,
   PlanetExit,
+  ExitComplete,
 } from '../generated/OuterSpace/OuterSpaceContract';
 import {Transfer} from '../generated/PlayToken_L2/PlayToken_L2_Contract';
 import {Planet, Fleet, Owner, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent} from '../generated/schema';
@@ -67,6 +68,9 @@ function handleOwner(address: Address): Owner {
     return entity as Owner;
   }
   entity = new Owner(id);
+  entity.totalStaked = ZERO;
+  entity.currentStake = ZERO;
+  entity.totalCollected = ZERO;
   entity.playTokenToWithdraw = ZERO;
   entity.playTokenBalance = ZERO;
   entity.save();
@@ -78,6 +82,9 @@ export function handlePlanetStake(event: PlanetStake): void {
   log.error('id: {}', [id]);
   let entity = getOrCreatePlanet(id);
   let owner = handleOwner(event.params.acquirer);
+  owner.totalStaked = owner.totalStaked.plus(event.params.stake);
+  owner.currentStake = owner.currentStake.plus(event.params.stake);
+  owner.save();
   entity.owner = owner.id;
   entity.numSpaceships = event.params.numSpaceships;
   entity.lastUpdated = event.block.timestamp;
@@ -173,6 +180,13 @@ export function handleExit(event: PlanetExit): void {
   planetExitEvent.planet = planetEntity.id;
   planetExitEvent.exitTime = event.block.timestamp;
   planetExitEvent.save();
+}
+
+export function handleExitComplete(event: ExitComplete): void {
+  let owner = handleOwner(event.params.owner);
+  owner.totalCollected = owner.totalCollected.plus(event.params.stake);
+  owner.currentStake = owner.currentStake.minus(event.params.stake);
+  owner.save();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
