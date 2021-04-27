@@ -15,7 +15,15 @@ dataSources:
       apiVersion: 0.0.3
       language: wasm/assemblyscript
       entities:
+        - Space
         - Planet
+        - Owner
+        - Fleet
+        - PlanetStakeEvent
+        - PlanetExitEvent
+        - FleetArrivedEvent
+        - FleetSentEvent
+        - StakeToWithdrawEvent
       abis:
         - name: OuterSpaceContract
           file: ./abis/OuterSpace.json
@@ -32,7 +40,7 @@ dataSources:
           handler: handleStakeToWithdraw
         - event: ExitComplete(indexed address,indexed uint256,uint256)
           handler: handleExitComplete
-      file: ./src/mapping.ts
+      file: ./src/outerspace.ts
   - kind: ethereum/contract
     name: PlayToken_L2
     network: {{chainName}}
@@ -52,4 +60,4 @@ dataSources:
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handlePlayTokenTransfer
-      file: ./src/mapping.ts
+      file: ./src/playtoken.ts

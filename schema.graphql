@@ -10,6 +10,14 @@ type Owner @entity {
   playTokenToWithdraw: BigInt!
 }
 
+type Space @entity {
+  id: ID! # Space
+  minX: BigInt!
+  maxX: BigInt!
+  minY: BigInt!
+  maxY: BigInt!
+}
+
 type Planet @entity {
   id: ID!
   owner: Owner!

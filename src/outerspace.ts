@@ -1,6 +1,7 @@
 /* eslint-disable */
-import {store, BigInt, Address} from '@graphprotocol/graph-ts';
-import {flipHex, c2, ZERO, ZERO_ADDRESS, toPlanetId, toOwnerId, toFleetId, toEventId} from './utils';
+import {BigInt, Bytes} from '@graphprotocol/graph-ts';
+import {flipHex, c2, ZERO, toPlanetId, toOwnerId, toFleetId, toEventId} from './utils';
+import {handleOwner} from './shared';
 import {
   PlanetStake,
   FleetSent,
@@ -9,9 +10,61 @@ import {
   PlanetExit,
   ExitComplete,
 } from '../generated/OuterSpace/OuterSpaceContract';
-import {Transfer} from '../generated/PlayToken_L2/PlayToken_L2_Contract';
-import {Planet, Fleet, Owner, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent} from '../generated/schema';
+import {Planet, Fleet, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent, Space} from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
+
+let INITIAL_SPACE = BigInt.fromI32(12);
+let EXPANSION = BigInt.fromI32(6);
+let UINT32_MAX = BigInt.fromUnsignedBytes(Bytes.fromHexString('0xFFFFFFFF') as Bytes);
+function handleSpaceChanges(planet: Planet): void {
+  let space = Space.load('Space');
+  if (space == null) {
+    space = new Space('Space');
+    space.minX = INITIAL_SPACE;
+    space.maxX = INITIAL_SPACE;
+    space.minY = INITIAL_SPACE;
+    space.maxY = INITIAL_SPACE;
+  }
+
+  let x = planet.x;
+  let y = planet.y;
+  if (x.lt(ZERO)) {
+    x = x.neg().plus(EXPANSION);
+    if (x.gt(UINT32_MAX)) {
+      x = UINT32_MAX;
+    }
+    if (space.minX.lt(x)) {
+      space.minX = x;
+    }
+  } else {
+    x = x.plus(EXPANSION);
+    if (x.gt(UINT32_MAX)) {
+      x = UINT32_MAX;
+    }
+    if (space.maxX.lt(x)) {
+      space.maxX = x;
+    }
+  }
+
+  if (y.lt(ZERO)) {
+    y = y.neg().plus(EXPANSION);
+    if (y.gt(UINT32_MAX)) {
+      y = UINT32_MAX;
+    }
+    if (space.minY.lt(y)) {
+      space.minY = y;
+    }
+  } else {
+    y = y.plus(EXPANSION);
+    if (y.gt(UINT32_MAX)) {
+      y = UINT32_MAX;
+    }
+    if (space.maxY.lt(y)) {
+      space.maxY = y;
+    }
+  }
+  space.save();
+}
 
 function getOrCreatePlanet(id: string): Planet {
   let entity = Planet.load(id);
@@ -62,22 +115,6 @@ function getOrCreatePlanet(id: string): Planet {
   return entity as Planet;
 }
 
-function handleOwner(address: Address): Owner {
-  let id = toOwnerId(address);
-  let entity = Owner.load(id);
-  if (entity) {
-    return entity as Owner;
-  }
-  entity = new Owner(id);
-  entity.totalStaked = ZERO;
-  entity.currentStake = ZERO;
-  entity.totalCollected = ZERO;
-  entity.playTokenToWithdraw = ZERO;
-  entity.playTokenBalance = ZERO;
-  entity.save();
-  return entity as Owner;
-}
-
 export function handlePlanetStake(event: PlanetStake): void {
   let id = toPlanetId(event.params.location);
   log.error('id: {}', [id]);
@@ -96,6 +133,8 @@ export function handlePlanetStake(event: PlanetStake): void {
   entity.lastAcquired = event.block.timestamp;
   entity.exitTime = ZERO;
   entity.save();
+
+  handleSpaceChanges(entity);
 }
 
 export function handleFleetSent(event: FleetSent): void {
@@ -199,18 +238,4 @@ export function handleStakeToWithdraw(event: StakeToWithdraw): void {
   let owner = handleOwner(event.params.owner);
   owner.playTokenToWithdraw = event.params.newStake;
   owner.save();
-}
-
-export function handlePlayTokenTransfer(event: Transfer): void {
-  if (!event.params.from.equals(ZERO_ADDRESS)) {
-    let from = handleOwner(event.params.from);
-    from.playTokenBalance = from.playTokenBalance.minus(event.params.value);
-    from.save();
-  }
-
-  if (!event.params.to.equals(ZERO_ADDRESS)) {
-    let to = handleOwner(event.params.to);
-    to.playTokenBalance = to.playTokenBalance.plus(event.params.value);
-    to.save();
-  }
 }
