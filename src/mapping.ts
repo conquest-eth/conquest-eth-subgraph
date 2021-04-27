@@ -15,11 +15,12 @@ import {log} from '@graphprotocol/graph-ts';
 
 function getOrCreatePlanet(id: string): Planet {
   let entity = Planet.load(id);
-  if (entity) {
+  if (entity != null) {
     return entity as Planet;
   }
   entity = new Planet(id);
   entity.firstAcquired = ZERO;
+  entity.active = false;
 
   let yString = id.slice(0, 34);
   let xString = '0x' + id.slice(34);
@@ -86,6 +87,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   owner.currentStake = owner.currentStake.plus(event.params.stake);
   owner.save();
   entity.owner = owner.id;
+  entity.active = true;
   entity.numSpaceships = event.params.numSpaceships;
   entity.lastUpdated = event.block.timestamp;
   if (entity.firstAcquired.equals(ZERO)) {
@@ -187,6 +189,9 @@ export function handleExitComplete(event: ExitComplete): void {
   owner.totalCollected = owner.totalCollected.plus(event.params.stake);
   owner.currentStake = owner.currentStake.minus(event.params.stake);
   owner.save();
+  let planetEntity = Planet.load(toPlanetId(event.params.location));
+  planetEntity.active = false;
+  planetEntity.save();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
