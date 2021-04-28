@@ -13,8 +13,8 @@ import {
 import {Planet, Fleet, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent, Space} from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
-let INITIAL_SPACE = BigInt.fromI32(12);
-let EXPANSION = BigInt.fromI32(6);
+let INITIAL_SPACE = BigInt.fromI32(16);
+let EXPANSION = BigInt.fromI32(8);
 let UINT32_MAX = BigInt.fromUnsignedBytes(Bytes.fromHexString('0xFFFFFFFF') as Bytes);
 function handleSpaceChanges(planet: Planet): void {
   let space = Space.load('Space');
