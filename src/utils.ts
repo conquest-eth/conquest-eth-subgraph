@@ -3,9 +3,7 @@ import {Bytes, ByteArray, BigInt, Address} from '@graphprotocol/graph-ts';
 
 import {ethereum} from '@graphprotocol/graph-ts/chain/ethereum';
 
-export let ZERO_ADDRESS: Bytes = Bytes.fromHexString(
-  '0x0000000000000000000000000000000000000000'
-) as Bytes;
+export let ZERO_ADDRESS: Bytes = Bytes.fromHexString('0x0000000000000000000000000000000000000000') as Bytes;
 export let ZERO = BigInt.fromI32(0);
 
 export function flipHex(str: string): string {
@@ -51,9 +49,7 @@ export function flipHex(str: string): string {
 }
 
 export function c2(str: string): BigInt {
-  return BigInt.fromSignedBytes(
-    ByteArray.fromHexString(str).reverse() as Bytes
-  );
+  return BigInt.fromSignedBytes(ByteArray.fromHexString(str).reverse() as Bytes);
 
   // if (str.charCodeAt(2) > 55) {
   // > 7 (0111)
@@ -76,13 +72,14 @@ export function toOwnerId(address: Address): string {
   return address.toHexString();
 }
 
+export function toRewardId(id: BigInt): string {
+  return id.toString();
+}
+
 export function toFleetId(fleet: BigInt): string {
   return fleet.toString();
 }
 
 export function toEventId(event: ethereum.Event): string {
-  return event.block.number
-    .toString()
-    .concat('-')
-    .concat(event.logIndex.toString());
+  return event.block.number.toString().concat('-').concat(event.logIndex.toString());
 }

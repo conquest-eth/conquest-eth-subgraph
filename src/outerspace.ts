@@ -1,6 +1,6 @@
 /* eslint-disable */
-import {BigInt, Bytes} from '@graphprotocol/graph-ts';
-import {flipHex, c2, ZERO, toPlanetId, toOwnerId, toFleetId, toEventId} from './utils';
+import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
+import {flipHex, c2, ZERO, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
 import {handleOwner} from './shared';
 import {
   PlanetStake,
@@ -9,9 +9,37 @@ import {
   StakeToWithdraw,
   PlanetExit,
   ExitComplete,
+  RewardSetup,
+  RewardToWithdraw,
 } from '../generated/OuterSpace/OuterSpaceContract';
-import {Planet, Fleet, FleetSentEvent, FleetArrivedEvent, PlanetExitEvent, Space} from '../generated/schema';
+import {
+  Planet,
+  Fleet,
+  FleetSentEvent,
+  FleetArrivedEvent,
+  PlanetExitEvent,
+  Space,
+  ExitCompleteEvent,
+  StakeToWithdrawEvent,
+  RewardSetupEvent,
+  RewardToWithdrawEvent,
+  Reward,
+} from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
+
+function handleReward(rewardId: BigInt, ownerId: string, planetId: string): Reward {
+  let id = toRewardId(rewardId);
+  let entity = Reward.load(id);
+  if (entity) {
+    return entity as Reward;
+  }
+  entity = new Reward(id);
+  entity.owner = ownerId;
+  entity.planet = planetId;
+  entity.withdrawn = false;
+  entity.save();
+  return entity as Reward;
+}
 
 let INITIAL_SPACE = BigInt.fromI32(16);
 let EXPANSION = BigInt.fromI32(8);
@@ -74,6 +102,11 @@ function getOrCreatePlanet(id: string): Planet {
   entity = new Planet(id);
   entity.firstAcquired = ZERO;
   entity.active = false;
+  entity.numSpaceships = ZERO;
+  entity.lastUpdated = ZERO;
+  entity.exitTime = ZERO;
+  entity.lastAcquired = ZERO;
+  entity.reward = ZERO;
 
   let yString = id.slice(0, 34);
   let xString = '0x' + id.slice(34);
@@ -230,7 +263,17 @@ export function handleExitComplete(event: ExitComplete): void {
   owner.save();
   let planetEntity = Planet.load(toPlanetId(event.params.location));
   planetEntity.active = false;
+  planetEntity.owner = null;
   planetEntity.save();
+
+  let exitCompleteEvent = new ExitCompleteEvent(toEventId(event));
+  exitCompleteEvent.blockNumber = event.block.number.toI32();
+  exitCompleteEvent.timestamp = event.block.timestamp;
+  exitCompleteEvent.transactionID = event.transaction.hash;
+  exitCompleteEvent.owner = owner.id;
+  exitCompleteEvent.planet = planetEntity.id;
+  exitCompleteEvent.stake = event.params.stake;
+  exitCompleteEvent.save();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -238,4 +281,46 @@ export function handleStakeToWithdraw(event: StakeToWithdraw): void {
   let owner = handleOwner(event.params.owner);
   owner.playTokenToWithdraw = event.params.newStake;
   owner.save();
+
+  let stakeToWithdrawEvent = new StakeToWithdrawEvent(toEventId(event));
+  stakeToWithdrawEvent.blockNumber = event.block.number.toI32();
+  stakeToWithdrawEvent.timestamp = event.block.timestamp;
+  stakeToWithdrawEvent.transactionID = event.transaction.hash;
+  stakeToWithdrawEvent.owner = owner.id;
+  stakeToWithdrawEvent.newStake = event.params.newStake;
+  stakeToWithdrawEvent.save();
+}
+
+export function handleRewardSetup(event: RewardSetup): void {
+  let planetId = toPlanetId(event.params.location);
+  let planetEntity = getOrCreatePlanet(planetId);
+  planetEntity.reward = event.params.rewardId;
+  planetEntity.save();
+
+  let rewardSetupEvent = new RewardSetupEvent(toEventId(event));
+  rewardSetupEvent.blockNumber = event.block.number.toI32();
+  rewardSetupEvent.timestamp = event.block.timestamp;
+  rewardSetupEvent.transactionID = event.transaction.hash;
+  rewardSetupEvent.planet = planetEntity.id;
+  rewardSetupEvent.rewardId = event.params.rewardId;
+  rewardSetupEvent.save();
+}
+
+export function handleRewardToWithdraw(event: RewardToWithdraw): void {
+  let planetEntity = Planet.load(toPlanetId(event.params.location));
+  planetEntity.reward = ZERO;
+  planetEntity.save();
+
+  let owner = handleOwner(event.params.owner);
+
+  handleReward(event.params.rewardId, owner.id, planetEntity.id);
+
+  let rewardToWithdrawEvent = new RewardToWithdrawEvent(toEventId(event));
+  rewardToWithdrawEvent.blockNumber = event.block.number.toI32();
+  rewardToWithdrawEvent.timestamp = event.block.timestamp;
+  rewardToWithdrawEvent.transactionID = event.transaction.hash;
+  rewardToWithdrawEvent.planet = planetEntity.id;
+  rewardToWithdrawEvent.owner = owner.id;
+  rewardToWithdrawEvent.rewardId = event.params.rewardId;
+  rewardToWithdrawEvent.save();
 }
