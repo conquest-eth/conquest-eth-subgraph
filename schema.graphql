@@ -41,6 +41,10 @@ type Planet @entity {
   events: [PlanetEvent!]! @derivedFrom(field: "planet")
   rewards: [Reward]! @derivedFrom(field: "planet")
 
+  # extra data
+  stake: BigInt # TODO compute it , for now used to gather it easily from graph queries
+  # ...
+
   # TODO remove ------------
   x: BigInt!
   y: BigInt!
@@ -111,6 +115,13 @@ type PlanetExitEvent implements OwnerEvent & OwnedPlanetEvent @entity {
   owner: Owner!
   planet: Planet!
   exitTime: BigInt!
+
+  # extra data
+  stake: BigInt!
+
+  # TODO:
+  # 0 = exiting, 1 = complete, 2 = interupted
+  # complete: Int! #updated once ExitComplete get called or someone else capture the planet, otherwise assume it worked if exitDUration time passed
 }
 
 type FleetArrivedEvent implements OwnerEvent & OwnedPlanetEvent & FleetEvent @entity {
@@ -128,6 +139,10 @@ type FleetArrivedEvent implements OwnerEvent & OwnedPlanetEvent & FleetEvent @en
   inFlightPlanetLoss: BigInt!
   won: Boolean!
   newNumspaceships: BigInt!
+
+  # extra data
+  from: Planet!
+  quantity: BigInt!
 }
 type FleetSentEvent implements OwnerEvent & OwnedPlanetEvent & FleetEvent @entity {
   id: ID! # <blockNumber>_logID

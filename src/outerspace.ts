@@ -166,6 +166,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   }
   entity.lastAcquired = event.block.timestamp;
   entity.exitTime = ZERO;
+  entity.stake = event.params.stake;
   entity.save();
 
   let planetStakeEvent = new PlanetStakeEvent(toEventId(event));
@@ -244,6 +245,10 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
   fleetArrivedEvent.won = event.params.won;
   fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships; // TODO rename
+
+  // extra data
+  fleetArrivedEvent.from = fleetEntity.from;
+  fleetArrivedEvent.quantity = fleetEntity.quantity;
   fleetArrivedEvent.save();
 }
 
@@ -264,6 +269,12 @@ export function handleExit(event: PlanetExit): void {
   planetExitEvent.owner = owner.id;
   planetExitEvent.planet = planetEntity.id;
   planetExitEvent.exitTime = event.block.timestamp;
+
+  // extra data
+  planetExitEvent.stake = planetEntity.stake as BigInt;
+  // planetExitEvent.complete = 0; // exiting...
+  // TODO associate that event to that planet so that later event can trigger its update
+  // this works as there can only be one active exit per planet at a time
   planetExitEvent.save();
 }
 
