@@ -101,6 +101,7 @@ type PlanetStakeEvent implements OwnerEvent & OwnedPlanetEvent @entity {
   owner: Owner!
   planet: Planet!
   numSpaceships: BigInt!
+  stake: BigInt!
 }
 type PlanetExitEvent implements OwnerEvent & OwnedPlanetEvent @entity {
   id: ID! # <blockNumber>_logID

@@ -24,6 +24,7 @@ import {
   RewardSetupEvent,
   RewardToWithdrawEvent,
   Reward,
+  PlanetStakeEvent,
 } from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
@@ -166,6 +167,16 @@ export function handlePlanetStake(event: PlanetStake): void {
   entity.lastAcquired = event.block.timestamp;
   entity.exitTime = ZERO;
   entity.save();
+
+  let planetStakeEvent = new PlanetStakeEvent(toEventId(event));
+  planetStakeEvent.blockNumber = event.block.number.toI32();
+  planetStakeEvent.timestamp = event.block.timestamp;
+  planetStakeEvent.transactionID = event.transaction.hash;
+  planetStakeEvent.owner = owner.id;
+  planetStakeEvent.planet = entity.id;
+  planetStakeEvent.numSpaceships = event.params.numSpaceships;
+  planetStakeEvent.stake = event.params.stake;
+  planetStakeEvent.save();
 
   handleSpaceChanges(entity);
 }
