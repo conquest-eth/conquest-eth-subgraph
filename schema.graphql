@@ -9,6 +9,7 @@ type Owner @entity {
   totalCollected: BigInt!
   playTokenBalance: BigInt!
   playTokenToWithdraw: BigInt!
+  playTokenGiven: BigInt!
 }
 
 type Reward @entity {
@@ -41,9 +42,7 @@ type Planet @entity {
   events: [PlanetEvent!]! @derivedFrom(field: "planet")
   rewards: [Reward]! @derivedFrom(field: "planet")
 
-  # extra data
-  stake: BigInt # TODO compute it , for now used to gather it easily from graph queries
-  # ...
+  stakeDeposited: BigInt!
 
   # TODO remove ------------
   x: BigInt!

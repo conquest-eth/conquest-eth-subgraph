@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
 import {flipHex, c2, ZERO, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
-import {handleOwner} from './shared';
+import {handleOwner, handleOwnerViaId} from './shared';
 import {
   PlanetStake,
   FleetSent,
@@ -108,6 +108,7 @@ function getOrCreatePlanet(id: string): Planet {
   entity.exitTime = ZERO;
   entity.lastAcquired = ZERO;
   entity.reward = ZERO;
+  entity.stakeDeposited = ZERO;
 
   let yString = id.slice(0, 34);
   let xString = '0x' + id.slice(34);
@@ -166,7 +167,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   }
   entity.lastAcquired = event.block.timestamp;
   entity.exitTime = ZERO;
-  entity.stake = event.params.stake;
+  entity.stakeDeposited = event.params.stake;
   entity.save();
 
   let planetStakeEvent = new PlanetStakeEvent(toEventId(event));
@@ -224,7 +225,15 @@ export function handleFleetArrived(event: FleetArrived): void {
   planetEntity.numSpaceships = event.params.newNumspaceships;
   planetEntity.lastUpdated = event.block.timestamp;
   if (event.params.won) {
-    planetEntity.owner = fleetEntity.owner;
+    if (planetEntity.stakeDeposited.gt(ZERO)) {
+      destinationOwner.currentStake = destinationOwner.currentStake.minus(planetEntity.stakeDeposited);
+      destinationOwner.save();
+
+      sender.currentStake = sender.currentStake.plus(planetEntity.stakeDeposited);
+      sender.save();
+    }
+
+    planetEntity.owner = sender.id;
     planetEntity.lastAcquired = event.block.timestamp;
     planetEntity.exitTime = ZERO; // disable exit on capture
   }
@@ -271,7 +280,7 @@ export function handleExit(event: PlanetExit): void {
   planetExitEvent.exitTime = event.block.timestamp;
 
   // extra data
-  planetExitEvent.stake = planetEntity.stake as BigInt;
+  planetExitEvent.stake = planetEntity.stakeDeposited as BigInt;
   // planetExitEvent.complete = 0; // exiting...
   // TODO associate that event to that planet so that later event can trigger its update
   // this works as there can only be one active exit per planet at a time
@@ -285,6 +294,7 @@ export function handleExitComplete(event: ExitComplete): void {
   owner.save();
   let planetEntity = Planet.load(toPlanetId(event.params.location));
   planetEntity.active = false;
+  planetEntity.stakeDeposited = ZERO;
   planetEntity.owner = null;
   planetEntity.save();
 
