@@ -11,6 +11,8 @@ query($first: Int! $lastId: ID!) {
       id_gt: $lastId
     }) {
       id
+      introducer { id }
+      playTokenGiven
     }
 }
 `;
@@ -19,7 +21,8 @@ async function main() {
   const players: {
     id: string;
   }[] = await theGraph.query(queryString, 'owners', {});
-  console.log({players: players, numPlayers: players.length});
+  console.log(JSON.stringify(players, null, 2));
+  console.log({numPlayers: players.length});
 }
 
 main();
