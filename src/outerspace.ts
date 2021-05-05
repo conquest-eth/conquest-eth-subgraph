@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
-import {flipHex, c2, ZERO, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
+import {flipHex, c2, ZERO, ONE, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
 import {handleOwner, handleOwnerViaId} from './shared';
 import {
   PlanetStake,
@@ -43,9 +43,8 @@ function handleReward(rewardId: BigInt, ownerId: string, planetId: string): Rewa
 }
 
 let INITIAL_SPACE = BigInt.fromI32(16);
-let EXPANSION = BigInt.fromI32(8);
-let UINT32_MAX = BigInt.fromUnsignedBytes(Bytes.fromHexString('0xFFFFFFFF') as Bytes);
-function handleSpaceChanges(planet: Planet): void {
+
+function handleSpace(): Space {
   let space = Space.load('Space');
   if (space == null) {
     space = new Space('Space');
@@ -53,7 +52,26 @@ function handleSpaceChanges(planet: Planet): void {
     space.maxX = INITIAL_SPACE;
     space.minY = INITIAL_SPACE;
     space.maxY = INITIAL_SPACE;
+
+    space.stake_gas = ZERO;
+    space.stake_num = ZERO;
+
+    space.sending_gas = ZERO;
+    space.sending_num = ZERO;
+
+    space.resolving_gas = ZERO;
+    space.resolving_num = ZERO;
+
+    space.exit_attempt_gas = ZERO;
+    space.exit_attempt_num = ZERO;
   }
+  return space as Space;
+}
+
+let EXPANSION = BigInt.fromI32(8);
+let UINT32_MAX = BigInt.fromUnsignedBytes(Bytes.fromHexString('0xFFFFFFFF') as Bytes);
+function handleSpaceChanges(planet: Planet): void {
+  let space = handleSpace();
 
   let x = planet.x;
   let y = planet.y;
@@ -181,6 +199,11 @@ export function handlePlanetStake(event: PlanetStake): void {
   planetStakeEvent.save();
 
   handleSpaceChanges(entity);
+
+  let space = handleSpace();
+  space.stake_gas = space.stake_gas.plus(event.transaction.gasUsed);
+  space.stake_num = space.stake_num.plus(ONE);
+  space.save();
 }
 
 export function handleFleetSent(event: FleetSent): void {
@@ -212,6 +235,11 @@ export function handleFleetSent(event: FleetSent): void {
   fleetSendEvent.newNumSpaceships = event.params.newNumSpaceships;
   fleetSendEvent.quantity = event.params.quantity;
   fleetSendEvent.save();
+
+  let space = handleSpace();
+  space.sending_gas = space.sending_gas.plus(event.transaction.gasUsed);
+  space.sending_num = space.sending_num.plus(ONE);
+  space.save();
 }
 
 export function handleFleetArrived(event: FleetArrived): void {
@@ -259,6 +287,11 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.from = fleetEntity.from;
   fleetArrivedEvent.quantity = fleetEntity.quantity;
   fleetArrivedEvent.save();
+
+  let space = handleSpace();
+  space.resolving_gas = space.resolving_gas.plus(event.transaction.gasUsed);
+  space.resolving_num = space.resolving_num.plus(ONE);
+  space.save();
 }
 
 export function handleExit(event: PlanetExit): void {
@@ -285,6 +318,11 @@ export function handleExit(event: PlanetExit): void {
   // TODO associate that event to that planet so that later event can trigger its update
   // this works as there can only be one active exit per planet at a time
   planetExitEvent.save();
+
+  let space = handleSpace();
+  space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasUsed);
+  space.exit_attempt_num = space.exit_attempt_num.plus(ONE);
+  space.save();
 }
 
 export function handleExitComplete(event: ExitComplete): void {

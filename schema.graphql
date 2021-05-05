@@ -27,6 +27,18 @@ type Space @entity {
   maxX: BigInt!
   minY: BigInt!
   maxY: BigInt!
+
+  stake_gas: BigInt!
+  stake_num: BigInt!
+
+  sending_gas: BigInt!
+  sending_num: BigInt!
+
+  resolving_gas: BigInt!
+  resolving_num: BigInt!
+
+  exit_attempt_gas: BigInt!
+  exit_attempt_num: BigInt!
 }
 
 type Planet @entity {

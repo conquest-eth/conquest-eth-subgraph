@@ -5,6 +5,7 @@ import {ethereum} from '@graphprotocol/graph-ts/chain/ethereum';
 
 export let ZERO_ADDRESS: Bytes = Bytes.fromHexString('0x0000000000000000000000000000000000000000') as Bytes;
 export let ZERO = BigInt.fromI32(0);
+export let ONE = BigInt.fromI32(1);
 
 export function flipHex(str: string): string {
   let newStr = '0x';
