@@ -15,6 +15,19 @@ export function handleOwnerViaId(id: string): Owner {
   entity.playTokenToWithdraw = ZERO;
   entity.playTokenBalance = ZERO;
   entity.playTokenGiven = ZERO;
+
+  entity.stake_gas = ZERO;
+  entity.stake_num = ZERO;
+
+  entity.sending_gas = ZERO;
+  entity.sending_num = ZERO;
+
+  entity.resolving_gas = ZERO;
+  entity.resolving_num = ZERO;
+
+  entity.exit_attempt_gas = ZERO;
+  entity.exit_attempt_num = ZERO;
+
   entity.save();
   return entity as Owner;
 }

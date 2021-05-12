@@ -175,7 +175,11 @@ export function handlePlanetStake(event: PlanetStake): void {
   let owner = handleOwner(event.params.acquirer);
   owner.totalStaked = owner.totalStaked.plus(event.params.stake);
   owner.currentStake = owner.currentStake.plus(event.params.stake);
+
+  owner.stake_gas = owner.stake_gas.plus(event.transaction.gasUsed);
+  owner.stake_num = owner.stake_num.plus(ONE);
   owner.save();
+
   entity.owner = owner.id;
   entity.active = true;
   entity.numSpaceships = event.params.numSpaceships;
@@ -220,6 +224,10 @@ export function handleFleetSent(event: FleetSent): void {
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
   let sender = handleOwner(event.params.fleetOwner);
+  sender.sending_gas = sender.sending_gas.plus(event.transaction.gasUsed);
+  sender.sending_num = sender.sending_num.plus(ONE);
+  sender.save();
+
   fleetEntity.owner = sender.id;
   fleetEntity.launchTime = event.block.timestamp;
   fleetEntity.from = planetEntity.id;
@@ -258,13 +266,17 @@ export function handleFleetArrived(event: FleetArrived): void {
       destinationOwner.save();
 
       sender.currentStake = sender.currentStake.plus(planetEntity.stakeDeposited);
-      sender.save();
     }
 
     planetEntity.owner = sender.id;
     planetEntity.lastAcquired = event.block.timestamp;
     planetEntity.exitTime = ZERO; // disable exit on capture
   }
+
+  // TODO gas counted even if agent or other perform it
+  sender.resolving_gas = sender.resolving_gas.plus(event.transaction.gasUsed);
+  sender.resolving_num = sender.resolving_num.plus(ONE);
+  sender.save();
 
   planetEntity.save();
 
@@ -296,6 +308,10 @@ export function handleFleetArrived(event: FleetArrived): void {
 
 export function handleExit(event: PlanetExit): void {
   let owner = handleOwner(event.params.owner);
+  owner.exit_attempt_gas = owner.exit_attempt_gas.plus(event.transaction.gasUsed);
+  owner.exit_attempt_num = owner.exit_attempt_num.plus(ONE);
+  owner.save();
+
   let planetId = toPlanetId(event.params.location);
   let planetEntity = Planet.load(planetId);
   if (!planetEntity) {
