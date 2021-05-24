@@ -104,15 +104,6 @@ interface PlanetEvent {
   planet: Planet!
 }
 
-interface OwnedPlanetEvent {
-  id: ID! # <blockNumber>_logID
-  blockNumber: Int!
-  timestamp: BigInt!
-  transactionID: Bytes!
-  owner: Owner!
-  planet: Planet!
-}
-
 interface FleetEvent {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
@@ -122,7 +113,7 @@ interface FleetEvent {
   fleet: Fleet!
 }
 
-type PlanetStakeEvent implements OwnerEvent & OwnedPlanetEvent @entity {
+type PlanetStakeEvent implements OwnerEvent & PlanetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!
@@ -132,7 +123,7 @@ type PlanetStakeEvent implements OwnerEvent & OwnedPlanetEvent @entity {
   numSpaceships: BigInt!
   stake: BigInt!
 }
-type PlanetExitEvent implements OwnerEvent & OwnedPlanetEvent @entity {
+type PlanetExitEvent implements OwnerEvent & PlanetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!
@@ -149,7 +140,7 @@ type PlanetExitEvent implements OwnerEvent & OwnedPlanetEvent @entity {
   # complete: Int! #updated once ExitComplete get called or someone else capture the planet, otherwise assume it worked if exitDUration time passed
 }
 
-type FleetArrivedEvent implements OwnerEvent & OwnedPlanetEvent & FleetEvent @entity {
+type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!
@@ -169,7 +160,7 @@ type FleetArrivedEvent implements OwnerEvent & OwnedPlanetEvent & FleetEvent @en
   from: Planet!
   quantity: BigInt!
 }
-type FleetSentEvent implements OwnerEvent & OwnedPlanetEvent & FleetEvent @entity {
+type FleetSentEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!
@@ -191,7 +182,7 @@ type StakeToWithdrawEvent implements OwnerEvent @entity {
 }
 
 # ExitComplete(address indexed owner, uint256 indexed location, uint256 stake);
-type ExitCompleteEvent implements OwnerEvent & OwnedPlanetEvent @entity {
+type ExitCompleteEvent implements OwnerEvent & PlanetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!
@@ -212,7 +203,7 @@ type RewardSetupEvent implements PlanetEvent @entity {
 }
 
 # (address indexed owner, uint256 indexed location, uint256 indexed rewardId);
-type RewardToWithdrawEvent implements OwnerEvent & OwnedPlanetEvent @entity {
+type RewardToWithdrawEvent implements OwnerEvent & PlanetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!
