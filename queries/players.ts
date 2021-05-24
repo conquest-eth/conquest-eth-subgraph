@@ -20,7 +20,7 @@ query($first: Int! $lastId: ID!) {
 async function main() {
   const players: {
     id: string;
-  }[] = await theGraph.query(queryString, 'owners', {});
+  }[] = await theGraph.query(queryString, {field: 'owners'});
   console.log(JSON.stringify(players, null, 2));
   console.log({numPlayers: players.length});
 }

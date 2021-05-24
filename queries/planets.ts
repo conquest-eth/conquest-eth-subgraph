@@ -17,7 +17,7 @@ query($first: Int! $lastId: ID!) {
 async function main() {
   const planets: {
     id: string;
-  }[] = await theGraph.query(queryString, 'planets', {});
+  }[] = await theGraph.query(queryString, {field: 'planets'});
   console.log({planets: planets, numPlanets: planets.length});
 }
 

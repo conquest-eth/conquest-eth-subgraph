@@ -32,7 +32,7 @@ async function main() {
     id: string;
     introducer: {id: string};
     playTokenGiven: string;
-  }[] = await theGraph.query(queryString, 'owners', {});
+  }[] = await theGraph.query(queryString, {field: 'owners'});
 
   const playersToEmail: {email: string; amount: number}[] = [];
   const airdrop: {address: string; amount: number}[] = [];
