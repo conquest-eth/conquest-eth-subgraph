@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
 import {flipHex, c2, ZERO, ONE, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
-import {handleOwner, handleOwnerViaId} from './shared';
+import {handleOwner, handleOwnerViaId, updateChainAndReturnTransactionID} from './shared';
 import {
   PlanetStake,
   FleetSent,
@@ -169,6 +169,7 @@ function getOrCreatePlanet(id: string): Planet {
 }
 
 export function handlePlanetStake(event: PlanetStake): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let id = toPlanetId(event.params.location);
   log.error('id: {}', [id]);
   let entity = getOrCreatePlanet(id);
@@ -195,7 +196,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   let planetStakeEvent = new PlanetStakeEvent(toEventId(event));
   planetStakeEvent.blockNumber = event.block.number.toI32();
   planetStakeEvent.timestamp = event.block.timestamp;
-  planetStakeEvent.transactionID = event.transaction.hash;
+  planetStakeEvent.transaction = transactionId;
   planetStakeEvent.owner = owner.id;
   planetStakeEvent.planet = entity.id;
   planetStakeEvent.numSpaceships = event.params.numSpaceships;
@@ -211,6 +212,7 @@ export function handlePlanetStake(event: PlanetStake): void {
 }
 
 export function handleFleetSent(event: FleetSent): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let fleetId = toFleetId(event.params.fleet);
   // ---------------- LOG ----------------------------
   let existingFleet = Fleet.load(fleetId);
@@ -236,7 +238,7 @@ export function handleFleetSent(event: FleetSent): void {
   let fleetSendEvent = new FleetSentEvent(toEventId(event));
   fleetSendEvent.blockNumber = event.block.number.toI32();
   fleetSendEvent.timestamp = event.block.timestamp;
-  fleetSendEvent.transactionID = event.transaction.hash;
+  fleetSendEvent.transaction = transactionId;
   fleetSendEvent.owner = sender.id;
   fleetSendEvent.planet = planetEntity.id;
   fleetSendEvent.fleet = fleetId;
@@ -251,6 +253,7 @@ export function handleFleetSent(event: FleetSent): void {
 }
 
 export function handleFleetArrived(event: FleetArrived): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let fleetId = toFleetId(event.params.fleet);
   let planetId = toPlanetId(event.params.destination);
   let planetEntity = getOrCreatePlanet(planetId);
@@ -283,7 +286,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   let fleetArrivedEvent = new FleetArrivedEvent(toEventId(event));
   fleetArrivedEvent.blockNumber = event.block.number.toI32();
   fleetArrivedEvent.timestamp = event.block.timestamp;
-  fleetArrivedEvent.transactionID = event.transaction.hash;
+  fleetArrivedEvent.transaction = transactionId;
   fleetArrivedEvent.owner = sender.id;
   fleetArrivedEvent.planet = planetEntity.id;
   fleetArrivedEvent.fleet = fleetId;
@@ -307,6 +310,7 @@ export function handleFleetArrived(event: FleetArrived): void {
 }
 
 export function handleExit(event: PlanetExit): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let owner = handleOwner(event.params.owner);
   owner.exit_attempt_gas = owner.exit_attempt_gas.plus(event.transaction.gasUsed);
   owner.exit_attempt_num = owner.exit_attempt_num.plus(ONE);
@@ -323,7 +327,7 @@ export function handleExit(event: PlanetExit): void {
   let planetExitEvent = new PlanetExitEvent(toEventId(event));
   planetExitEvent.blockNumber = event.block.number.toI32();
   planetExitEvent.timestamp = event.block.timestamp;
-  planetExitEvent.transactionID = event.transaction.hash;
+  planetExitEvent.transaction = transactionId;
   planetExitEvent.owner = owner.id;
   planetExitEvent.planet = planetEntity.id;
   planetExitEvent.exitTime = event.block.timestamp;
@@ -342,6 +346,7 @@ export function handleExit(event: PlanetExit): void {
 }
 
 export function handleExitComplete(event: ExitComplete): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let owner = handleOwner(event.params.owner);
   owner.totalCollected = owner.totalCollected.plus(event.params.stake);
   owner.currentStake = owner.currentStake.minus(event.params.stake);
@@ -355,7 +360,7 @@ export function handleExitComplete(event: ExitComplete): void {
   let exitCompleteEvent = new ExitCompleteEvent(toEventId(event));
   exitCompleteEvent.blockNumber = event.block.number.toI32();
   exitCompleteEvent.timestamp = event.block.timestamp;
-  exitCompleteEvent.transactionID = event.transaction.hash;
+  exitCompleteEvent.transaction = transactionId;
   exitCompleteEvent.owner = owner.id;
   exitCompleteEvent.planet = planetEntity.id;
   exitCompleteEvent.stake = event.params.stake;
@@ -364,6 +369,7 @@ export function handleExitComplete(event: ExitComplete): void {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function handleStakeToWithdraw(event: StakeToWithdraw): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let owner = handleOwner(event.params.owner);
   owner.playTokenToWithdraw = event.params.newStake;
   owner.save();
@@ -371,13 +377,14 @@ export function handleStakeToWithdraw(event: StakeToWithdraw): void {
   let stakeToWithdrawEvent = new StakeToWithdrawEvent(toEventId(event));
   stakeToWithdrawEvent.blockNumber = event.block.number.toI32();
   stakeToWithdrawEvent.timestamp = event.block.timestamp;
-  stakeToWithdrawEvent.transactionID = event.transaction.hash;
+  stakeToWithdrawEvent.transaction = transactionId;
   stakeToWithdrawEvent.owner = owner.id;
   stakeToWithdrawEvent.newStake = event.params.newStake;
   stakeToWithdrawEvent.save();
 }
 
 export function handleRewardSetup(event: RewardSetup): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let planetId = toPlanetId(event.params.location);
   let planetEntity = getOrCreatePlanet(planetId);
   planetEntity.reward = event.params.rewardId;
@@ -386,13 +393,14 @@ export function handleRewardSetup(event: RewardSetup): void {
   let rewardSetupEvent = new RewardSetupEvent(toEventId(event));
   rewardSetupEvent.blockNumber = event.block.number.toI32();
   rewardSetupEvent.timestamp = event.block.timestamp;
-  rewardSetupEvent.transactionID = event.transaction.hash;
+  rewardSetupEvent.transaction = transactionId;
   rewardSetupEvent.planet = planetEntity.id;
   rewardSetupEvent.rewardId = event.params.rewardId;
   rewardSetupEvent.save();
 }
 
 export function handleRewardToWithdraw(event: RewardToWithdraw): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
   let planetEntity = Planet.load(toPlanetId(event.params.location));
   planetEntity.reward = ZERO;
   planetEntity.save();
@@ -404,7 +412,7 @@ export function handleRewardToWithdraw(event: RewardToWithdraw): void {
   let rewardToWithdrawEvent = new RewardToWithdrawEvent(toEventId(event));
   rewardToWithdrawEvent.blockNumber = event.block.number.toI32();
   rewardToWithdrawEvent.timestamp = event.block.timestamp;
-  rewardToWithdrawEvent.transactionID = event.transaction.hash;
+  rewardToWithdrawEvent.transaction = transactionId;
   rewardToWithdrawEvent.planet = planetEntity.id;
   rewardToWithdrawEvent.owner = owner.id;
   rewardToWithdrawEvent.rewardId = event.params.rewardId;

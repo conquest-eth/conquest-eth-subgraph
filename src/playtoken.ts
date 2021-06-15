@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {ZERO_ADDRESS} from './utils';
 import {Transfer} from '../generated/PlayToken_L2/PlayToken_L2_Contract';
-import {handleOwner} from './shared';
+import {handleOwner, updateChainAndReturnTransactionID} from './shared';
 import {Bytes} from '@graphprotocol/graph-ts';
 import {Owner} from '../generated/schema';
 
@@ -9,6 +9,7 @@ import {Owner} from '../generated/schema';
 let CONQUEST_ADDRESS: Bytes = Bytes.fromHexString('0xac11b7660e03601e6c09c0f983dba4653f64647b') as Bytes;
 
 export function handlePlayTokenTransfer(event: Transfer): void {
+  updateChainAndReturnTransactionID(event);
   let from: Owner | null;
   if (!event.params.from.equals(ZERO_ADDRESS)) {
     from = handleOwner(event.params.from);

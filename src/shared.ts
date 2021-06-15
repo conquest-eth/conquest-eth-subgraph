@@ -1,7 +1,7 @@
 /* eslint-disable */
-import {Address} from '@graphprotocol/graph-ts';
+import {Address, ethereum} from '@graphprotocol/graph-ts';
 import {ZERO, toOwnerId} from './utils';
-import {Owner} from '../generated/schema';
+import {Owner, Chain, Transaction} from '../generated/schema';
 
 export function handleOwnerViaId(id: string): Owner {
   let entity = Owner.load(id);
@@ -35,4 +35,23 @@ export function handleOwnerViaId(id: string): Owner {
 export function handleOwner(address: Address): Owner {
   let id = toOwnerId(address);
   return handleOwnerViaId(id);
+}
+
+export function updateChainAndReturnTransactionID(event: ethereum.Event): string {
+  let chain = Chain.load('Chain');
+  if (chain == null) {
+    chain = new Chain('Chain');
+  }
+  chain.blockHash = event.block.hash.toHex();
+  chain.blockNumber = event.block.number;
+  chain.save();
+
+  let transactionId = event.transaction.hash.toHex();
+  let transaction = Transaction.load(transactionId);
+  if (transaction == null) {
+    transaction = new Transaction(transactionId);
+    transaction.save();
+  }
+
+  return transactionId;
 }

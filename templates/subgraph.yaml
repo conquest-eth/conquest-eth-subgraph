@@ -24,6 +24,7 @@ dataSources:
         - FleetArrivedEvent
         - FleetSentEvent
         - StakeToWithdrawEvent
+        - Chain
       abis:
         - name: OuterSpaceContract
           file: ./abis/OuterSpace.json
@@ -58,6 +59,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - Owner
+        - Chain
       abis:
         - name: PlayToken_L2_Contract
           file: ./abis/PlayToken_L2.json
