@@ -29,5 +29,8 @@
     "deploy": "npm-run-all \"generate -- {1}\" codegen wait:deploy --",
     "hosted:redeploy": "echo \"deploying $SUBGRAPH_NAME ...\" && dotenv -- cross-var graph deploy --studio $SUBGRAPH_NAME",
     "hosted:deploy": "npm-run-all \"generate -- {1}\" codegen hosted:redeploy --"
+  },
+  "volta": {
+    "node": "14.17.5"
   }
 }
