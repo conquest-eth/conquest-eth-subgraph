@@ -296,6 +296,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.inFlightFleetLoss = event.params.inFlightFleetLoss;
   fleetArrivedEvent.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
   fleetArrivedEvent.won = event.params.won;
+  fleetArrivedEvent.gift = event.params.gift;
   fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships; // TODO rename
 
   // extra data

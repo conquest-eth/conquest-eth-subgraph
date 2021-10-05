@@ -67,3 +67,24 @@ dataSources:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handlePlayTokenTransfer
       file: ./src/playtoken.ts
+  - kind: ethereum/contract
+    name: AllianceRegistry
+    network: {{chainName}}
+    source:
+      address: '{{contracts.AllianceRegistry.address}}'
+      abi: AllianceRegistry_Contract
+      startBlock: {{contracts.AllianceRegistry.receipt.blockNumber}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Owner
+        - Alliance
+      abis:
+        - name: AllianceRegistry_Contract
+          file: ./abis/AllianceRegistry.json
+      eventHandlers:
+        - event: AllianceLink(indexed address,indexed address,bool)
+          handler: handleAllianceLink
+      file: ./src/alliances.ts
