@@ -103,6 +103,17 @@ type Fleet @entity {
   launchTime: BigInt!
   from: Planet!
   quantity: BigInt!
+  resolved: Boolean!
+  sendTransaction: Transaction!
+  resolveTransaction: Transaction
+  to: Planet
+  destinationOwner: Owner
+  gift: Boolean
+  fleetLoss: BigInt
+  planetLoss: BigInt
+  inFlightFleetLoss: BigInt
+  inFlightPlanetLoss: BigInt
+  won: Boolean
   events: [FleetEvent!]! @derivedFrom(field: "fleet")
 }
 

@@ -234,6 +234,8 @@ export function handleFleetSent(event: FleetSent): void {
   fleetEntity.launchTime = event.block.timestamp;
   fleetEntity.from = planetEntity.id;
   fleetEntity.quantity = event.params.quantity;
+  fleetEntity.resolved = false;
+  fleetEntity.sendTransaction = transactionId;
   fleetEntity.save();
   let fleetSendEvent = new FleetSentEvent(toEventId(event));
   fleetSendEvent.blockNumber = event.block.number.toI32();
@@ -303,6 +305,19 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.from = fleetEntity.from;
   fleetArrivedEvent.quantity = fleetEntity.quantity;
   fleetArrivedEvent.save();
+
+  let fleet = Fleet.load(fleetId);
+  fleet.resolved = true;
+  fleet.resolveTransaction = transactionId;
+  fleet.to = planetEntity.id;
+  fleet.destinationOwner = destinationOwner.id;
+  fleet.gift = event.params.gift;
+  fleet.fleetLoss = event.params.fleetLoss;
+  fleet.planetLoss = event.params.planetLoss;
+  fleet.inFlightFleetLoss = event.params.inFlightFleetLoss;
+  fleet.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
+  fleet.won = event.params.won;
+  fleet.save();
 
   let space = handleSpace();
   space.resolving_gas = space.resolving_gas.plus(event.transaction.gasUsed);
