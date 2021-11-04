@@ -88,6 +88,8 @@ type Planet @entity {
 
   stakeDeposited: BigInt!
 
+  currentExit: PlanetExitEvent
+
   # TODO remove ------------
   x: BigInt!
   y: BigInt!
@@ -168,9 +170,10 @@ type PlanetExitEvent implements OwnerEvent & PlanetEvent @entity {
   # extra data
   stake: BigInt!
 
-  # TODO:
-  # 0 = exiting, 1 = complete, 2 = interupted
-  # complete: Int! #updated once ExitComplete get called or someone else capture the planet, otherwise assume it worked if exitDUration time passed
+  #updated once ExitComplete get called or someone else capture the planet, otherwise assume it worked if exitDUration time passed
+  interupted: Boolean! # if interupted
+  complete: Boolean! # if event has been completed or interupted or claimed
+  success: Boolean! # success if complete
 }
 
 type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {

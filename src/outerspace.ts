@@ -276,6 +276,15 @@ export function handleFleetArrived(event: FleetArrived): void {
     planetEntity.owner = sender.id;
     planetEntity.lastAcquired = event.block.timestamp;
     planetEntity.exitTime = ZERO; // disable exit on capture
+    let planetExitEventId = planetEntity.currentExit;
+    if (planetExitEventId) {
+      let planetExitEvent = PlanetExitEvent.load(planetExitEventId);
+      planetExitEvent.complete = true;
+      planetExitEvent.interupted = true;
+      planetExitEvent.success = false;
+      planetExitEvent.save();
+      planetEntity.currentExit = null;
+    }
   }
 
   // TODO gas counted even if agent or other perform it
@@ -339,7 +348,7 @@ export function handleExit(event: PlanetExit): void {
     // will fails as all fields are not set
   }
   planetEntity.exitTime = event.block.timestamp;
-  planetEntity.save();
+
   let planetExitEvent = new PlanetExitEvent(toEventId(event));
   planetExitEvent.blockNumber = event.block.number.toI32();
   planetExitEvent.timestamp = event.block.timestamp;
@@ -350,10 +359,13 @@ export function handleExit(event: PlanetExit): void {
 
   // extra data
   planetExitEvent.stake = planetEntity.stakeDeposited as BigInt;
-  // planetExitEvent.complete = 0; // exiting...
-  // TODO associate that event to that planet so that later event can trigger its update
-  // this works as there can only be one active exit per planet at a time
+  planetExitEvent.complete = false;
+  planetExitEvent.interupted = false;
+  planetExitEvent.success = false;
   planetExitEvent.save();
+
+  planetEntity.currentExit = planetExitEvent.id;
+  planetEntity.save();
 
   let space = handleSpace();
   space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasUsed);
@@ -371,6 +383,17 @@ export function handleExitComplete(event: ExitComplete): void {
   planetEntity.active = false;
   planetEntity.stakeDeposited = ZERO;
   planetEntity.owner = null;
+
+  let planetExitEventId = planetEntity.currentExit;
+  if (planetExitEventId) {
+    let planetExitEvent = PlanetExitEvent.load(planetExitEventId);
+    planetExitEvent.complete = true;
+    planetExitEvent.success = true;
+    planetExitEvent.interupted = false;
+    planetExitEvent.save();
+  }
+
+  planetEntity.currentExit = null;
   planetEntity.save();
 
   let exitCompleteEvent = new ExitCompleteEvent(toEventId(event));
