@@ -126,7 +126,9 @@ function getOrCreatePlanet(id: string): Planet {
   entity.exitTime = ZERO;
   entity.lastAcquired = ZERO;
   entity.reward = ZERO;
+  entity.rewardGiver = '';
   entity.stakeDeposited = ZERO;
+  entity.owner = '';
 
   let yString = id.slice(0, 34);
   let xString = '0x' + id.slice(34);
@@ -382,7 +384,7 @@ export function handleExitComplete(event: ExitComplete): void {
   let planetEntity = Planet.load(toPlanetId(event.params.location));
   planetEntity.active = false;
   planetEntity.stakeDeposited = ZERO;
-  planetEntity.owner = null;
+  planetEntity.owner = '';
 
   let planetExitEventId = planetEntity.currentExit;
   if (planetExitEventId) {
@@ -427,6 +429,7 @@ export function handleRewardSetup(event: RewardSetup): void {
   let planetId = toPlanetId(event.params.location);
   let planetEntity = getOrCreatePlanet(planetId);
   planetEntity.reward = event.params.rewardId;
+  planetEntity.rewardGiver = event.params.giver.toHexString();
   planetEntity.save();
 
   let rewardSetupEvent = new RewardSetupEvent(toEventId(event));
@@ -434,6 +437,7 @@ export function handleRewardSetup(event: RewardSetup): void {
   rewardSetupEvent.timestamp = event.block.timestamp;
   rewardSetupEvent.transaction = transactionId;
   rewardSetupEvent.planet = planetEntity.id;
+  rewardSetupEvent.giver = event.params.giver.toHexString();
   rewardSetupEvent.rewardId = event.params.rewardId;
   rewardSetupEvent.save();
 }
@@ -442,6 +446,7 @@ export function handleRewardToWithdraw(event: RewardToWithdraw): void {
   let transactionId = updateChainAndReturnTransactionID(event);
   let planetEntity = Planet.load(toPlanetId(event.params.location));
   planetEntity.reward = ZERO;
+  planetEntity.rewardGiver = '';
   planetEntity.save();
 
   let owner = handleOwner(event.params.owner);

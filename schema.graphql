@@ -82,6 +82,7 @@ type Planet @entity {
   zone: String!
   exitTime: BigInt!
   reward: BigInt!
+  rewardGiver: String!
   departedFleets: [Fleet!]! @derivedFrom(field: "from")
   events: [PlanetEvent!]! @derivedFrom(field: "planet")
   rewards: [Reward]! @derivedFrom(field: "planet")
@@ -237,6 +238,7 @@ type RewardSetupEvent implements PlanetEvent @entity {
   transaction: Transaction!
   planet: Planet!
   rewardId: BigInt!
+  giver: String!
 }
 
 # (address indexed owner, uint256 indexed location, uint256 indexed rewardId);
