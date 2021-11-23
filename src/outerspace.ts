@@ -1,5 +1,5 @@
 /* eslint-disable */
-import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
+import {store, BigInt, Bytes} from '@graphprotocol/graph-ts';
 import {flipHex, c2, ZERO, ONE, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
 import {handleOwner, handleOwnerViaId, updateChainAndReturnTransactionID} from './shared';
 import {
@@ -11,6 +11,7 @@ import {
   ExitComplete,
   RewardSetup,
   RewardToWithdraw,
+  PlanetReset,
 } from '../generated/OuterSpace/OuterSpaceContract';
 import {
   Planet,
@@ -334,6 +335,13 @@ export function handleFleetArrived(event: FleetArrived): void {
   space.resolving_gas = space.resolving_gas.plus(event.transaction.gasUsed);
   space.resolving_num = space.resolving_num.plus(ONE);
   space.save();
+}
+
+export function handlePlanetReset(event: PlanetReset): void {
+  let planetId = toPlanetId(event.params.location);
+  if (Planet.load(planetId)) {
+    store.remove('Planet', planetId);
+  }
 }
 
 export function handleExit(event: PlanetExit): void {

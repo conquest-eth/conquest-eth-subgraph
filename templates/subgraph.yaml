@@ -35,6 +35,8 @@ dataSources:
           handler: handleFleetSent
         - event: FleetArrived(indexed uint256,indexed address,indexed address,uint256,bool,uint32,uint32,uint32,uint32,bool,uint32)
           handler: handleFleetArrived
+        - event: PlanetReset(indexed uint256)
+          handler: handlePlanetReset
         - event: PlanetExit(indexed address,indexed uint256)
           handler: handleExit
         - event: StakeToWithdraw(indexed address,uint256)
