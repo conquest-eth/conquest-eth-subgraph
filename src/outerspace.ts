@@ -337,10 +337,26 @@ export function handleFleetArrived(event: FleetArrived): void {
   space.save();
 }
 
+// TODO remove, use to test a deployment without affecting game play, not sure it is a good idea, due to events, etc,
+// was initial just doing store.remove(planetId) but this caused issue with events referring to the planer
 export function handlePlanetReset(event: PlanetReset): void {
   let planetId = toPlanetId(event.params.location);
-  if (Planet.load(planetId)) {
-    store.remove('Planet', planetId);
+  let planet = Planet.load(planetId);
+  if (planet) {
+    planet.firstAcquired = ZERO;
+    planet.active = false;
+    planet.numSpaceships = ZERO;
+    planet.lastUpdated = ZERO;
+    planet.exitTime = ZERO;
+    planet.lastAcquired = ZERO;
+    planet.reward = ZERO;
+    planet.rewardGiver = '';
+    planet.stakeDeposited = ZERO;
+    planet.owner = '';
+    planet.lastAcquired = ZERO;
+    planet.stakeDeposited = ZERO;
+    planet.currentExit = null;
+    planet.save();
   }
 }
 
