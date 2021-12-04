@@ -12,6 +12,7 @@ import {
   RewardSetup,
   RewardToWithdraw,
   PlanetReset,
+  Initialized,
 } from '../generated/OuterSpace/OuterSpaceContract';
 import {
   Planet,
@@ -49,7 +50,7 @@ function handleSpace(): Space {
   let space = Space.load('Space');
   if (space == null) {
     space = new Space('Space');
-    space.minX = INITIAL_SPACE;
+    space.minX = INITIAL_SPACE; // not needed anymore as we emit Initialized
     space.maxX = INITIAL_SPACE;
     space.minY = INITIAL_SPACE;
     space.maxY = INITIAL_SPACE;
@@ -169,6 +170,15 @@ function getOrCreatePlanet(id: string): Planet {
   //   centerZoneX.toHexString().slice(2).padStart(32, '0') +
   //   centerZoneY.toHexString().slice(2).padStart(32, '0');
   return entity as Planet;
+}
+
+export function handleInitialized(event: Initialized): void {
+  let space = handleSpace();
+  space.minX = event.params.minX;
+  space.maxX = event.params.maxX;
+  space.minY = event.params.minY;
+  space.maxY = event.params.maxY;
+  space.save();
 }
 
 export function handlePlanetStake(event: PlanetStake): void {

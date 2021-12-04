@@ -47,6 +47,8 @@ dataSources:
           handler: handleRewardSetup
         - event: RewardToWithdraw(indexed address,indexed uint256,indexed uint256)
           handler: handleRewardToWithdraw
+        - event: Initialized(uint32,uint32,uint32,uint32,bytes32)
+          handler: handleInitialized
       file: ./src/outerspace.ts
   - kind: ethereum/contract
     name: PlayToken_L2
