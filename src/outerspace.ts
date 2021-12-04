@@ -173,6 +173,7 @@ function getOrCreatePlanet(id: string): Planet {
 }
 
 export function handleInitialized(event: Initialized): void {
+  updateChainAndReturnTransactionID(event);
   let space = handleSpace();
   space.minX = event.params.minX;
   space.maxX = event.params.maxX;
