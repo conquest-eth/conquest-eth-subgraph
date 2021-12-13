@@ -6,7 +6,7 @@ import {Bytes} from '@graphprotocol/graph-ts';
 import {Owner} from '../generated/schema';
 
 // TODO inject, for now use alpha address
-let CONQUEST_ADDRESS: Bytes = Bytes.fromHexString('0xac11b7660e03601e6c09c0f983dba4653f64647b') as Bytes;
+let CONQUEST_ADDRESS: Bytes = Bytes.fromHexString('0x377606c34Ae6458d55ba04253ae815C9c48A9A73') as Bytes;
 
 export function handlePlayTokenTransfer(event: Transfer): void {
   updateChainAndReturnTransactionID(event);
