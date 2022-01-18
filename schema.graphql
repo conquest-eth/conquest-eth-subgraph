@@ -19,9 +19,9 @@ type Owner @entity {
   totalStaked: BigInt!
   currentStake: BigInt!
   totalCollected: BigInt!
-  playTokenBalance: BigInt!
-  playTokenToWithdraw: BigInt!
-  playTokenGiven: BigInt!
+  tokenBalance: BigInt!
+  tokenToWithdraw: BigInt!
+  tokenGiven: BigInt!
 
   introducer: Owner
 

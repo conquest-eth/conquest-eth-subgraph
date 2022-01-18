@@ -447,7 +447,7 @@ export function handleExitComplete(event: ExitComplete): void {
 export function handleStakeToWithdraw(event: StakeToWithdraw): void {
   let transactionId = updateChainAndReturnTransactionID(event);
   let owner = handleOwner(event.params.owner);
-  owner.playTokenToWithdraw = event.params.newStake;
+  owner.tokenToWithdraw = event.params.newStake;
   owner.save();
 
   let stakeToWithdrawEvent = new StakeToWithdrawEvent(toEventId(event));

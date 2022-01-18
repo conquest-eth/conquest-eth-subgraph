@@ -51,12 +51,12 @@ dataSources:
           handler: handleInitialized
       file: ./src/outerspace.ts
   - kind: ethereum/contract
-    name: PlayToken_L2
+    name: ConquestToken
     network: {{chainName}}
     source:
-      address: '{{contracts.PlayToken_L2.address}}'
-      abi: PlayToken_L2_Contract
-      startBlock: {{contracts.PlayToken_L2.receipt.blockNumber}}
+      address: '{{contracts.ConquestToken.address}}'
+      abi: ConquestToken_Contract
+      startBlock: {{contracts.ConquestToken.receipt.blockNumber}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.3
@@ -65,12 +65,12 @@ dataSources:
         - Owner
         - Chain
       abis:
-        - name: PlayToken_L2_Contract
-          file: ./abis/PlayToken_L2.json
+        - name: ConquestToken_Contract
+          file: ./abis/ConquestToken.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
-          handler: handlePlayTokenTransfer
-      file: ./src/playtoken.ts
+          handler: handleTokenTransfer
+      file: ./src/token.ts
   - kind: ethereum/contract
     name: AllianceRegistry
     network: {{chainName}}
