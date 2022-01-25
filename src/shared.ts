@@ -16,16 +16,16 @@ export function handleOwnerViaId(id: string): Owner {
   entity.tokenBalance = ZERO;
   entity.tokenGiven = ZERO;
 
-  entity.stake_gas = ZERO;
+  // entity.stake_gas = ZERO;
   entity.stake_num = ZERO;
 
-  entity.sending_gas = ZERO;
+  // entity.sending_gas = ZERO;
   entity.sending_num = ZERO;
 
-  entity.resolving_gas = ZERO;
+  // entity.resolving_gas = ZERO;
   entity.resolving_num = ZERO;
 
-  entity.exit_attempt_gas = ZERO;
+  // entity.exit_attempt_gas = ZERO;
   entity.exit_attempt_num = ZERO;
 
   entity.save();

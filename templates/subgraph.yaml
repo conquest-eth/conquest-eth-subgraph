@@ -1,4 +1,4 @@
-specVersion: 0.0.2
+specVersion: 0.0.3
 description: conquest.eth
 schema:
   file: ./schema.graphql
@@ -12,7 +12,7 @@ dataSources:
       startBlock: {{contracts.OuterSpace.receipt.blockNumber}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - Space
@@ -59,7 +59,7 @@ dataSources:
       startBlock: {{contracts.ConquestToken.receipt.blockNumber}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - Owner
@@ -80,7 +80,7 @@ dataSources:
       startBlock: {{contracts.AllianceRegistry.receipt.blockNumber}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - Owner

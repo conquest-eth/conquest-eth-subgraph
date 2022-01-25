@@ -14,7 +14,7 @@ type Owner @entity {
   planets: [Planet!]! @derivedFrom(field: "owner")
   fleets: [Fleet!]! @derivedFrom(field: "owner")
   events: [OwnerEvent!]! @derivedFrom(field: "owner")
-  rewards: [Reward]! @derivedFrom(field: "owner")
+  rewards: [Reward!]! @derivedFrom(field: "owner")
   alliances: [AllianceOwnerPair!]! @derivedFrom(field: "owner")
   totalStaked: BigInt!
   currentStake: BigInt!
@@ -25,16 +25,16 @@ type Owner @entity {
 
   introducer: Owner
 
-  stake_gas: BigInt!
+  # stake_gas: BigInt! //https://github.com/graphprotocol/graph-node/issues/2619
   stake_num: BigInt!
 
-  sending_gas: BigInt!
+  # sending_gas: BigInt! //https://github.com/graphprotocol/graph-node/issues/2619
   sending_num: BigInt!
 
-  resolving_gas: BigInt!
+  # resolving_gas: BigInt! //https://github.com/graphprotocol/graph-node/issues/2619
   resolving_num: BigInt!
 
-  exit_attempt_gas: BigInt!
+  # exit_attempt_gas: BigInt! //https://github.com/graphprotocol/graph-node/issues/2619
   exit_attempt_num: BigInt!
 }
 
@@ -85,7 +85,7 @@ type Planet @entity {
   rewardGiver: String!
   departedFleets: [Fleet!]! @derivedFrom(field: "from")
   events: [PlanetEvent!]! @derivedFrom(field: "planet")
-  rewards: [Reward]! @derivedFrom(field: "planet")
+  rewards: [Reward!]! @derivedFrom(field: "planet")
 
   stakeDeposited: BigInt!
 

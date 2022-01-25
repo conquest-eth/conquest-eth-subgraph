@@ -55,16 +55,16 @@ function handleSpace(): Space {
     space.minY = INITIAL_SPACE;
     space.maxY = INITIAL_SPACE;
 
-    space.stake_gas = ZERO;
+    // space.stake_gas = ZERO;
     space.stake_num = ZERO;
 
-    space.sending_gas = ZERO;
+    // space.sending_gas = ZERO;
     space.sending_num = ZERO;
 
-    space.resolving_gas = ZERO;
+    // space.resolving_gas = ZERO;
     space.resolving_num = ZERO;
 
-    space.exit_attempt_gas = ZERO;
+    // space.exit_attempt_gas = ZERO;
     space.exit_attempt_num = ZERO;
   }
   return space as Space;
@@ -191,7 +191,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   owner.totalStaked = owner.totalStaked.plus(event.params.stake);
   owner.currentStake = owner.currentStake.plus(event.params.stake);
 
-  owner.stake_gas = owner.stake_gas.plus(event.transaction.gasUsed);
+  // owner.stake_gas = owner.stake_gas.plus(event.transaction.gasLimit); //gasLimit is not gasUsed
   owner.stake_num = owner.stake_num.plus(ONE);
   owner.save();
 
@@ -220,7 +220,7 @@ export function handlePlanetStake(event: PlanetStake): void {
   handleSpaceChanges(entity);
 
   let space = handleSpace();
-  space.stake_gas = space.stake_gas.plus(event.transaction.gasUsed);
+  // space.stake_gas = space.stake_gas.plus(event.transaction.gasLimit); //gasLimit is not gasUsed
   space.stake_num = space.stake_num.plus(ONE);
   space.save();
 }
@@ -240,7 +240,7 @@ export function handleFleetSent(event: FleetSent): void {
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
   let sender = handleOwner(event.params.fleetOwner);
-  sender.sending_gas = sender.sending_gas.plus(event.transaction.gasUsed);
+  // sender.sending_gas = sender.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   sender.sending_num = sender.sending_num.plus(ONE);
   sender.save();
 
@@ -263,7 +263,7 @@ export function handleFleetSent(event: FleetSent): void {
   fleetSendEvent.save();
 
   let space = handleSpace();
-  space.sending_gas = space.sending_gas.plus(event.transaction.gasUsed);
+  // space.sending_gas = space.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.sending_num = space.sending_num.plus(ONE);
   space.save();
 }
@@ -273,7 +273,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   let fleetId = toFleetId(event.params.fleet);
   let planetId = toPlanetId(event.params.destination);
   let planetEntity = getOrCreatePlanet(planetId);
-  let fleetEntity = Fleet.load(fleetId);
+  let fleetEntity = Fleet.load(fleetId) as Fleet; // assert it is available by then
   let sender = handleOwner(event.params.fleetOwner);
   let destinationOwner = handleOwner(event.params.destinationOwner);
 
@@ -292,7 +292,7 @@ export function handleFleetArrived(event: FleetArrived): void {
     planetEntity.exitTime = ZERO; // disable exit on capture
     let planetExitEventId = planetEntity.currentExit;
     if (planetExitEventId) {
-      let planetExitEvent = PlanetExitEvent.load(planetExitEventId);
+      let planetExitEvent = PlanetExitEvent.load(planetExitEventId) as PlanetExitEvent; // assert it is available by then
       planetExitEvent.complete = true;
       planetExitEvent.interupted = true;
       planetExitEvent.success = false;
@@ -302,7 +302,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   }
 
   // TODO gas counted even if agent or other perform it
-  sender.resolving_gas = sender.resolving_gas.plus(event.transaction.gasUsed);
+  // sender.resolving_gas = sender.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   sender.resolving_num = sender.resolving_num.plus(ONE);
   sender.save();
 
@@ -329,7 +329,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.quantity = fleetEntity.quantity;
   fleetArrivedEvent.save();
 
-  let fleet = Fleet.load(fleetId);
+  let fleet = Fleet.load(fleetId) as Fleet; // assert it is available by then
   fleet.resolved = true;
   fleet.resolveTransaction = transactionId;
   fleet.to = planetEntity.id;
@@ -343,7 +343,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleet.save();
 
   let space = handleSpace();
-  space.resolving_gas = space.resolving_gas.plus(event.transaction.gasUsed);
+  // space.resolving_gas = space.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.resolving_num = space.resolving_num.plus(ONE);
   space.save();
 }
@@ -374,12 +374,12 @@ export function handlePlanetReset(event: PlanetReset): void {
 export function handleExit(event: PlanetExit): void {
   let transactionId = updateChainAndReturnTransactionID(event);
   let owner = handleOwner(event.params.owner);
-  owner.exit_attempt_gas = owner.exit_attempt_gas.plus(event.transaction.gasUsed);
+  // owner.exit_attempt_gas = owner.exit_attempt_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   owner.exit_attempt_num = owner.exit_attempt_num.plus(ONE);
   owner.save();
 
   let planetId = toPlanetId(event.params.location);
-  let planetEntity = Planet.load(planetId);
+  let planetEntity = Planet.load(planetId) as Planet; // assert it is available by then
   if (!planetEntity) {
     log.error('planet never acquired: {}', [planetId]); // this should never happen, exit can only happen when acquired
     // will fails as all fields are not set
@@ -405,7 +405,7 @@ export function handleExit(event: PlanetExit): void {
   planetEntity.save();
 
   let space = handleSpace();
-  space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasUsed);
+  // space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.exit_attempt_num = space.exit_attempt_num.plus(ONE);
   space.save();
 }
@@ -416,14 +416,14 @@ export function handleExitComplete(event: ExitComplete): void {
   owner.totalCollected = owner.totalCollected.plus(event.params.stake);
   owner.currentStake = owner.currentStake.minus(event.params.stake);
   owner.save();
-  let planetEntity = Planet.load(toPlanetId(event.params.location));
+  let planetEntity = Planet.load(toPlanetId(event.params.location)) as Planet; // assert it is available by then
   planetEntity.active = false;
   planetEntity.stakeDeposited = ZERO;
   planetEntity.owner = '';
 
   let planetExitEventId = planetEntity.currentExit;
   if (planetExitEventId) {
-    let planetExitEvent = PlanetExitEvent.load(planetExitEventId);
+    let planetExitEvent = PlanetExitEvent.load(planetExitEventId) as PlanetExitEvent; // assert it is available by then
     planetExitEvent.complete = true;
     planetExitEvent.success = true;
     planetExitEvent.interupted = false;
@@ -479,7 +479,7 @@ export function handleRewardSetup(event: RewardSetup): void {
 
 export function handleRewardToWithdraw(event: RewardToWithdraw): void {
   let transactionId = updateChainAndReturnTransactionID(event);
-  let planetEntity = Planet.load(toPlanetId(event.params.location));
+  let planetEntity = Planet.load(toPlanetId(event.params.location)) as Planet; // assert it is available by then
   planetEntity.reward = ZERO;
   planetEntity.rewardGiver = '';
   planetEntity.save();
