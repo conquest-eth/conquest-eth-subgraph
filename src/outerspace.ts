@@ -274,7 +274,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   let planetId = toPlanetId(event.params.destination);
   let planetEntity = getOrCreatePlanet(planetId);
   let fleetEntity = Fleet.load(fleetId) as Fleet; // assert it is available by then
-  let sender = handleOwner(event.params.fleetOwner);
+  let fleetOwner = handleOwner(event.params.fleetOwner);
   let destinationOwner = handleOwner(event.params.destinationOwner);
 
   planetEntity.numSpaceships = event.params.newNumspaceships;
@@ -284,10 +284,10 @@ export function handleFleetArrived(event: FleetArrived): void {
       destinationOwner.currentStake = destinationOwner.currentStake.minus(planetEntity.stakeDeposited);
       destinationOwner.save();
 
-      sender.currentStake = sender.currentStake.plus(planetEntity.stakeDeposited);
+      fleetOwner.currentStake = fleetOwner.currentStake.plus(planetEntity.stakeDeposited);
     }
 
-    planetEntity.owner = sender.id;
+    planetEntity.owner = fleetOwner.id;
     planetEntity.lastAcquired = event.block.timestamp;
     planetEntity.exitTime = ZERO; // disable exit on capture
     let planetExitEventId = planetEntity.currentExit;
@@ -303,8 +303,8 @@ export function handleFleetArrived(event: FleetArrived): void {
 
   // TODO gas counted even if agent or other perform it
   // sender.resolving_gas = sender.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
-  sender.resolving_num = sender.resolving_num.plus(ONE);
-  sender.save();
+  fleetOwner.resolving_num = fleetOwner.resolving_num.plus(ONE);
+  fleetOwner.save();
 
   planetEntity.save();
 
@@ -312,7 +312,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.blockNumber = event.block.number.toI32();
   fleetArrivedEvent.timestamp = event.block.timestamp;
   fleetArrivedEvent.transaction = transactionId;
-  fleetArrivedEvent.owner = sender.id;
+  fleetArrivedEvent.owner = fleetOwner.id;
   fleetArrivedEvent.planet = planetEntity.id;
   fleetArrivedEvent.fleet = fleetId;
   fleetArrivedEvent.destinationOwner = destinationOwner.id;
