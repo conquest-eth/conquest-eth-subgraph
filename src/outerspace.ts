@@ -6,6 +6,7 @@ import {
   PlanetStake,
   FleetSent,
   FleetArrived,
+  TravelingUpkeepReductionFromDestruction,
   StakeToWithdraw,
   PlanetExit,
   ExitComplete,
@@ -19,6 +20,7 @@ import {
   Fleet,
   FleetSentEvent,
   FleetArrivedEvent,
+  TravelingUpkeepReductionFromDestructionEvent,
   PlanetExitEvent,
   Space,
   ExitCompleteEvent,
@@ -124,6 +126,8 @@ function getOrCreatePlanet(id: string): Planet {
   entity.firstAcquired = ZERO;
   entity.active = false;
   entity.numSpaceships = ZERO;
+  entity.travelingUpkeep = ZERO; // TODO ?
+  entity.overflow = ZERO;
   entity.lastUpdated = ZERO;
   entity.exitTime = ZERO;
   entity.lastAcquired = ZERO;
@@ -198,6 +202,8 @@ export function handlePlanetStake(event: PlanetStake): void {
   entity.owner = owner.id;
   entity.active = true;
   entity.numSpaceships = event.params.numSpaceships;
+  entity.travelingUpkeep = event.params.travelingUpkeep;
+  entity.overflow = event.params.overflow;
   entity.lastUpdated = event.block.timestamp;
   if (entity.firstAcquired.equals(ZERO)) {
     entity.firstAcquired = event.block.timestamp;
@@ -214,6 +220,8 @@ export function handlePlanetStake(event: PlanetStake): void {
   planetStakeEvent.owner = owner.id;
   planetStakeEvent.planet = entity.id;
   planetStakeEvent.numSpaceships = event.params.numSpaceships;
+  planetStakeEvent.travelingUpkeep = event.params.travelingUpkeep;
+  planetStakeEvent.overflow = event.params.overflow;
   planetStakeEvent.stake = event.params.stake;
   planetStakeEvent.save();
 
@@ -237,6 +245,8 @@ export function handleFleetSent(event: FleetSent): void {
   let fleetEntity = new Fleet(fleetId);
   let planetEntity = getOrCreatePlanet(toPlanetId(event.params.from)); // TODO should be created by now, should we error out if not ?
   planetEntity.numSpaceships = event.params.newNumSpaceships;
+  planetEntity.travelingUpkeep = event.params.newTravelingUpkeep;
+  planetEntity.overflow = event.params.newOverflow;
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
   let sender = handleOwner(event.params.fleetOwner);
@@ -251,16 +261,18 @@ export function handleFleetSent(event: FleetSent): void {
   fleetEntity.resolved = false;
   fleetEntity.sendTransaction = transactionId;
   fleetEntity.save();
-  let fleetSendEvent = new FleetSentEvent(toEventId(event));
-  fleetSendEvent.blockNumber = event.block.number.toI32();
-  fleetSendEvent.timestamp = event.block.timestamp;
-  fleetSendEvent.transaction = transactionId;
-  fleetSendEvent.owner = sender.id;
-  fleetSendEvent.planet = planetEntity.id;
-  fleetSendEvent.fleet = fleetId;
-  fleetSendEvent.newNumSpaceships = event.params.newNumSpaceships;
-  fleetSendEvent.quantity = event.params.quantity;
-  fleetSendEvent.save();
+  let fleetSentEvent = new FleetSentEvent(toEventId(event));
+  fleetSentEvent.blockNumber = event.block.number.toI32();
+  fleetSentEvent.timestamp = event.block.timestamp;
+  fleetSentEvent.transaction = transactionId;
+  fleetSentEvent.owner = sender.id;
+  fleetSentEvent.planet = planetEntity.id;
+  fleetSentEvent.fleet = fleetId;
+  fleetSentEvent.newNumSpaceships = event.params.newNumSpaceships;
+  fleetSentEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
+  fleetSentEvent.newOverflow = event.params.newOverflow;
+  fleetSentEvent.quantity = event.params.quantity;
+  fleetSentEvent.save();
 
   let space = handleSpace();
   // space.sending_gas = space.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
@@ -278,6 +290,8 @@ export function handleFleetArrived(event: FleetArrived): void {
   let destinationOwner = handleOwner(event.params.destinationOwner);
 
   planetEntity.numSpaceships = event.params.newNumspaceships;
+  planetEntity.travelingUpkeep = event.params.newTravelingUpkeep;
+  planetEntity.overflow = event.params.newOverflow;
   planetEntity.lastUpdated = event.block.timestamp;
   if (event.params.won) {
     if (planetEntity.stakeDeposited.gt(ZERO)) {
@@ -322,7 +336,11 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
   fleetArrivedEvent.won = event.params.won;
   fleetArrivedEvent.gift = event.params.gift;
-  fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships; // TODO rename
+
+  // TODO rename newNumspaceships?
+  fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships;
+  fleetArrivedEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
+  fleetArrivedEvent.newOverflow = event.params.newOverflow;
 
   // extra data
   fleetArrivedEvent.from = fleetEntity.from;
@@ -348,6 +366,37 @@ export function handleFleetArrived(event: FleetArrived): void {
   space.save();
 }
 
+export function handleTravelingUpkeepReductionFromDestruction(event: TravelingUpkeepReductionFromDestruction): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
+  let fleetId = toFleetId(event.params.fleet);
+  let planetId = toPlanetId(event.params.origin);
+  let planetEntity = getOrCreatePlanet(planetId);
+  let fleetEntity = Fleet.load(fleetId) as Fleet; // assert it is available by then
+  let fleetOwner = fleetEntity.owner;
+
+  planetEntity.numSpaceships = event.params.newNumspaceships;
+  planetEntity.travelingUpkeep = event.params.newTravelingUpkeep;
+  planetEntity.overflow = event.params.newOverflow;
+  planetEntity.lastUpdated = event.block.timestamp;
+
+  planetEntity.save();
+
+  let travelingUpkeepDestructionEvent = new TravelingUpkeepReductionFromDestructionEvent(toEventId(event));
+  travelingUpkeepDestructionEvent.blockNumber = event.block.number.toI32();
+  travelingUpkeepDestructionEvent.timestamp = event.block.timestamp;
+  travelingUpkeepDestructionEvent.transaction = transactionId;
+  travelingUpkeepDestructionEvent.owner = fleetOwner;
+  travelingUpkeepDestructionEvent.planet = planetEntity.id;
+  travelingUpkeepDestructionEvent.fleet = fleetId;
+
+  // TODO rename newNumspaceships?
+  travelingUpkeepDestructionEvent.newNumspaceships = event.params.newNumspaceships;
+  travelingUpkeepDestructionEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
+  travelingUpkeepDestructionEvent.newOverflow = event.params.newOverflow;
+
+  travelingUpkeepDestructionEvent.save();
+}
+
 // TODO remove, use to test a deployment without affecting game play, not sure it is a good idea, due to events, etc,
 // was initial just doing store.remove(planetId) but this caused issue with events referring to the planer
 export function handlePlanetReset(event: PlanetReset): void {
@@ -357,6 +406,8 @@ export function handlePlanetReset(event: PlanetReset): void {
     planet.firstAcquired = ZERO;
     planet.active = false;
     planet.numSpaceships = ZERO;
+    planet.travelingUpkeep = ZERO; // TODO ?
+    planet.overflow = ZERO;
     planet.lastUpdated = ZERO;
     planet.exitTime = ZERO;
     planet.lastAcquired = ZERO;

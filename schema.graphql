@@ -75,6 +75,8 @@ type Planet @entity {
   id: ID!
   owner: Owner
   numSpaceships: BigInt!
+  travelingUpkeep: BigInt!
+  overflow: BigInt!
   active: Boolean!
   lastUpdated: BigInt!
   firstAcquired: BigInt!
@@ -157,6 +159,8 @@ type PlanetStakeEvent implements OwnerEvent & PlanetEvent @entity {
   owner: Owner!
   planet: Planet!
   numSpaceships: BigInt!
+  travelingUpkeep: BigInt!
+  overflow: BigInt!
   stake: BigInt!
 }
 type PlanetExitEvent implements OwnerEvent & PlanetEvent @entity {
@@ -193,6 +197,8 @@ type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity 
   inFlightPlanetLoss: BigInt!
   won: Boolean!
   newNumspaceships: BigInt!
+  newTravelingUpkeep: BigInt!
+  newOverflow: BigInt!
 
   # extra data
   from: Planet!
@@ -208,6 +214,8 @@ type FleetSentEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   fleet: Fleet!
   quantity: BigInt!
   newNumSpaceships: BigInt!
+  newTravelingUpkeep: BigInt!
+  newOverflow: BigInt!
 }
 
 type StakeToWithdrawEvent implements OwnerEvent @entity {
@@ -217,6 +225,20 @@ type StakeToWithdrawEvent implements OwnerEvent @entity {
   transaction: Transaction!
   owner: Owner!
   newStake: BigInt!
+}
+
+type TravelingUpkeepReductionFromDestructionEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
+  id: ID! # <blockNumber>_logID
+  blockNumber: Int!
+  timestamp: BigInt!
+  transaction: Transaction!
+  owner: Owner!
+  planet: Planet!
+  fleet: Fleet!
+
+  newNumspaceships: BigInt!
+  newTravelingUpkeep: BigInt!
+  newOverflow: BigInt!
 }
 
 # ExitComplete(address indexed owner, uint256 indexed location, uint256 stake);
