@@ -21,6 +21,7 @@ const chainNames = {
   42: 'kovan',
   1337: 'mainnet',
   31337: 'mainnet',
+  100: 'xdai',
 };
 // TODO use chain.network
 
