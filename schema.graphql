@@ -199,6 +199,8 @@ type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity 
   newNumspaceships: BigInt!
   newTravelingUpkeep: BigInt!
   newOverflow: BigInt!
+  accumulatedDefenseAdded: BigInt!
+  accumulatedAttackAdded: BigInt!
 
   # extra data
   from: Planet!

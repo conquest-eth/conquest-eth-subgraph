@@ -341,6 +341,8 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships;
   fleetArrivedEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
   fleetArrivedEvent.newOverflow = event.params.newOverflow;
+  fleetArrivedEvent.accumulatedDefenseAdded = event.params.accumulatedDefenseAdded;
+  fleetArrivedEvent.accumulatedAttackAdded = event.params.accumulatedAttackAdded;
 
   // extra data
   fleetArrivedEvent.from = fleetEntity.from;

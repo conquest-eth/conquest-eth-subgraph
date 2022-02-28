@@ -34,7 +34,7 @@ dataSources:
           handler: handlePlanetStake
         - event: FleetSent(indexed address,indexed address,indexed uint256,address,uint256,uint32,uint32,int40,uint32)
           handler: handleFleetSent
-        - event: FleetArrived(indexed uint256,indexed address,indexed address,uint256,bool,uint32,uint32,uint32,uint32,bool,uint32,int40,uint32)
+        - event: FleetArrived(indexed uint256,indexed address,indexed address,uint256,bool,uint32,uint32,uint32,uint32,bool,uint32,int40,uint32,uint32,uint32)
           handler: handleFleetArrived
         - event: TravelingUpkeepReductionFromDestruction(indexed uint256,indexed uint256,uint32,int40,uint32)
           handler: handleTravelingUpkeepReductionFromDestruction
