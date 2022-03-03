@@ -58,6 +58,8 @@ type Space @entity {
   minY: BigInt!
   maxY: BigInt!
 
+  expansionDelta: BigInt!
+
   stake_gas: BigInt!
   stake_num: BigInt!
 

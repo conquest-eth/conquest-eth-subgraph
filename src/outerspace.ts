@@ -46,41 +46,14 @@ function handleReward(rewardId: BigInt, ownerId: string, planetId: string): Rewa
   return entity as Reward;
 }
 
-let INITIAL_SPACE = BigInt.fromI32(16);
-
-function handleSpace(): Space {
-  let space = Space.load('Space');
-  if (space == null) {
-    space = new Space('Space');
-    space.minX = INITIAL_SPACE; // not needed anymore as we emit Initialized
-    space.maxX = INITIAL_SPACE;
-    space.minY = INITIAL_SPACE;
-    space.maxY = INITIAL_SPACE;
-
-    // space.stake_gas = ZERO;
-    space.stake_num = ZERO;
-
-    // space.sending_gas = ZERO;
-    space.sending_num = ZERO;
-
-    // space.resolving_gas = ZERO;
-    space.resolving_num = ZERO;
-
-    // space.exit_attempt_gas = ZERO;
-    space.exit_attempt_num = ZERO;
-  }
-  return space as Space;
-}
-
-let EXPANSION = BigInt.fromI32(8);
 let UINT32_MAX = BigInt.fromUnsignedBytes(Bytes.fromHexString('0xFFFFFFFF') as Bytes);
 function handleSpaceChanges(planet: Planet): void {
-  let space = handleSpace();
+  let space = getSpace();
 
   let x = planet.x;
   let y = planet.y;
   if (x.lt(ZERO)) {
-    x = x.neg().plus(EXPANSION);
+    x = x.neg().plus(space.expansionDelta);
     if (x.gt(UINT32_MAX)) {
       x = UINT32_MAX;
     }
@@ -88,7 +61,7 @@ function handleSpaceChanges(planet: Planet): void {
       space.minX = x;
     }
   } else {
-    x = x.plus(EXPANSION);
+    x = x.plus(space.expansionDelta);
     if (x.gt(UINT32_MAX)) {
       x = UINT32_MAX;
     }
@@ -98,7 +71,7 @@ function handleSpaceChanges(planet: Planet): void {
   }
 
   if (y.lt(ZERO)) {
-    y = y.neg().plus(EXPANSION);
+    y = y.neg().plus(space.expansionDelta);
     if (y.gt(UINT32_MAX)) {
       y = UINT32_MAX;
     }
@@ -106,7 +79,7 @@ function handleSpaceChanges(planet: Planet): void {
       space.minY = y;
     }
   } else {
-    y = y.plus(EXPANSION);
+    y = y.plus(space.expansionDelta);
     if (y.gt(UINT32_MAX)) {
       y = UINT32_MAX;
     }
@@ -176,13 +149,41 @@ function getOrCreatePlanet(id: string): Planet {
   return entity as Planet;
 }
 
+export function getSpace(): Space {
+  let space = Space.load('Space');
+  return space as Space;
+}
+
 export function handleInitialized(event: Initialized): void {
   updateChainAndReturnTransactionID(event);
-  let space = handleSpace();
-  space.minX = event.params.minX;
-  space.maxX = event.params.maxX;
-  space.minY = event.params.minY;
-  space.maxY = event.params.maxY;
+  let space = Space.load('Space');
+  if (space == null) {
+    space = new Space('Space');
+    space.minX = ZERO;
+    space.maxX = ZERO;
+    space.minY = ZERO;
+    space.maxY = ZERO;
+
+    // space.stake_gas = ZERO;
+    space.stake_num = ZERO;
+
+    // space.sending_gas = ZERO;
+    space.sending_num = ZERO;
+
+    // space.resolving_gas = ZERO;
+    space.resolving_num = ZERO;
+
+    // space.exit_attempt_gas = ZERO;
+    space.exit_attempt_num = ZERO;
+  }
+
+  // NOTE : this actually reset, maybe only set if zero ?
+  space.minX = event.params.initialSpaceExpansion;
+  space.maxX = event.params.initialSpaceExpansion;
+  space.minY = event.params.initialSpaceExpansion;
+  space.maxY = event.params.initialSpaceExpansion;
+  space.expansionDelta = event.params.expansionDelta;
+
   space.save();
 }
 
@@ -227,7 +228,7 @@ export function handlePlanetStake(event: PlanetStake): void {
 
   handleSpaceChanges(entity);
 
-  let space = handleSpace();
+  let space = getSpace();
   // space.stake_gas = space.stake_gas.plus(event.transaction.gasLimit); //gasLimit is not gasUsed
   space.stake_num = space.stake_num.plus(ONE);
   space.save();
@@ -274,7 +275,7 @@ export function handleFleetSent(event: FleetSent): void {
   fleetSentEvent.quantity = event.params.quantity;
   fleetSentEvent.save();
 
-  let space = handleSpace();
+  let space = getSpace();
   // space.sending_gas = space.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.sending_num = space.sending_num.plus(ONE);
   space.save();
@@ -362,7 +363,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleet.won = event.params.won;
   fleet.save();
 
-  let space = handleSpace();
+  let space = getSpace();
   // space.resolving_gas = space.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.resolving_num = space.resolving_num.plus(ONE);
   space.save();
@@ -457,7 +458,7 @@ export function handleExit(event: PlanetExit): void {
   planetEntity.currentExit = planetExitEvent.id;
   planetEntity.save();
 
-  let space = handleSpace();
+  let space = getSpace();
   // space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.exit_attempt_num = space.exit_attempt_num.plus(ONE);
   space.save();
