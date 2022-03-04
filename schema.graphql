@@ -1,5 +1,6 @@
 type Alliance @entity {
   id: ID!
+  frontendURI: String
   members: [AllianceOwnerPair!]! @derivedFrom(field: "alliance")
 }
 

@@ -91,6 +91,8 @@ dataSources:
       abis:
         - name: AllianceRegistry_Contract
           file: ./abis/AllianceRegistry.json
+        - name: IAlliance_Contract
+          file: ./abis/IAlliance.json
       eventHandlers:
         - event: AllianceLink(indexed address,indexed address,bool)
           handler: handleAllianceLink

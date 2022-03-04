@@ -54,6 +54,7 @@ if (stat.isDirectory()) {
 
 const contracts = contractsInfo.contracts;
 fs.emptyDirSync('./abis');
+fs.copySync('./interfaces_abis', './abis');
 for (const contractName of Object.keys(contracts)) {
   const contractInfo = contracts[contractName];
   fs.writeFileSync(path.join('abis', contractName + '.json'), JSON.stringify(contractInfo.abi));
