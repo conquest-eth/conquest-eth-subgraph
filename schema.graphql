@@ -54,6 +54,7 @@ type Chain @entity {
 
 type Space @entity {
   id: ID! # Space
+  address: Bytes!
   minX: BigInt!
   maxX: BigInt!
   minY: BigInt!

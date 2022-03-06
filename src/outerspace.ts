@@ -159,6 +159,7 @@ export function handleInitialized(event: Initialized): void {
   let space = Space.load('Space');
   if (space == null) {
     space = new Space('Space');
+    space.address = event.address;
     space.minX = ZERO;
     space.maxX = ZERO;
     space.minY = ZERO;
