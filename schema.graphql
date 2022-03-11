@@ -210,6 +210,21 @@ type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity 
   from: Planet!
   quantity: BigInt!
 }
+type PlanetTransferEvent implements OwnerEvent & PlanetEvent @entity {
+  id: ID! # <blockNumber>_logID
+  blockNumber: Int!
+  timestamp: BigInt!
+  transaction: Transaction!
+  owner: Owner!
+  planet: Planet!
+
+  newNumspaceships: BigInt!
+  newTravelingUpkeep: BigInt!
+  newOverflow: BigInt!
+
+  # extra data
+  newOwner: Owner!
+}
 type FleetSentEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!

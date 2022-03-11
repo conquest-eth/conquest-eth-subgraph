@@ -14,6 +14,7 @@ import {
   RewardToWithdraw,
   PlanetReset,
   Initialized,
+  PlanetTransfer,
 } from '../generated/OuterSpace/OuterSpaceContract';
 import {
   Planet,
@@ -29,6 +30,7 @@ import {
   RewardToWithdrawEvent,
   Reward,
   PlanetStakeEvent,
+  PlanetTransferEvent,
 } from '../generated/schema';
 import {log} from '@graphprotocol/graph-ts';
 
@@ -368,6 +370,48 @@ export function handleFleetArrived(event: FleetArrived): void {
   // space.resolving_gas = space.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.resolving_num = space.resolving_num.plus(ONE);
   space.save();
+}
+
+export function handlePlanetTransfer(event: PlanetTransfer): void {
+  let transactionId = updateChainAndReturnTransactionID(event);
+  let planetId = toPlanetId(event.params.location);
+  let planetEntity = getOrCreatePlanet(planetId);
+  let previousOwner = handleOwner(event.params.previousOwner);
+  let newOwner = handleOwner(event.params.newOwner);
+
+  planetEntity.numSpaceships = event.params.newNumspaceships;
+  planetEntity.travelingUpkeep = event.params.newTravelingUpkeep;
+  planetEntity.overflow = event.params.newOverflow;
+  planetEntity.lastUpdated = event.block.timestamp;
+
+  if (planetEntity.stakeDeposited.gt(ZERO)) {
+    previousOwner.currentStake = previousOwner.currentStake.minus(planetEntity.stakeDeposited);
+    previousOwner.save();
+
+    newOwner.currentStake = newOwner.currentStake.plus(planetEntity.stakeDeposited);
+    newOwner.save();
+  }
+
+  planetEntity.owner = newOwner.id;
+  planetEntity.lastAcquired = event.block.timestamp;
+  // NOTE we do not reset exitTime
+  planetEntity.save();
+
+  let planetTransferEvent = new PlanetTransferEvent(toEventId(event));
+  planetTransferEvent.blockNumber = event.block.number.toI32();
+  planetTransferEvent.timestamp = event.block.timestamp;
+  planetTransferEvent.transaction = transactionId;
+  planetTransferEvent.owner = previousOwner.id;
+  planetTransferEvent.planet = planetEntity.id;
+
+  // TODO rename newNumspaceships?
+  planetTransferEvent.newNumspaceships = event.params.newNumspaceships;
+  planetTransferEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
+  planetTransferEvent.newOverflow = event.params.newOverflow;
+
+  // extra data
+  planetTransferEvent.newOwner = newOwner.id;
+  planetTransferEvent.save();
 }
 
 export function handleTravelingUpkeepReductionFromDestruction(event: TravelingUpkeepReductionFromDestruction): void {

@@ -52,6 +52,8 @@ dataSources:
           handler: handleRewardToWithdraw
         - event: Initialized(bytes32,uint256,uint256,uint256,uint32,uint32,uint256,uint256,uint256,uint256,uint32,uint32,uint256)
           handler: handleInitialized
+        - event: PlanetTransfer(indexed address,indexed address,indexed uint256,uint32,int40,uint32)
+          handler: handlePlanetTransfer
       file: ./src/outerspace.ts
   - kind: ethereum/contract
     name: ConquestToken
