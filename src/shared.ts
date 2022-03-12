@@ -1,7 +1,33 @@
 /* eslint-disable */
 import {Address, ethereum} from '@graphprotocol/graph-ts';
 import {ZERO, toOwnerId} from './utils';
-import {Owner, Chain, Transaction} from '../generated/schema';
+import {Owner, Chain, Transaction, Space} from '../generated/schema';
+
+export function handleSpace(): Space {
+  let space = Space.load('Space');
+  if (space == null) {
+    space = new Space('Space');
+    space.minX = ZERO;
+    space.maxX = ZERO;
+    space.minY = ZERO;
+    space.maxY = ZERO;
+    space.expansionDelta = ZERO;
+
+    space.stake_gas = ZERO;
+    space.stake_num = ZERO;
+
+    space.sending_gas = ZERO;
+    space.sending_num = ZERO;
+
+    space.resolving_gas = ZERO;
+    space.resolving_num = ZERO;
+
+    space.exit_attempt_gas = ZERO;
+    space.exit_attempt_num = ZERO;
+    space.save();
+  }
+  return space as Space;
+}
 
 export function handleOwnerViaId(id: string): Owner {
   let entity = Owner.load(id);

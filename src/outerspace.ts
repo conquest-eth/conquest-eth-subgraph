@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {store, BigInt, Bytes} from '@graphprotocol/graph-ts';
 import {flipHex, c2, ZERO, ONE, toPlanetId, toOwnerId, toFleetId, toEventId, toRewardId, ZERO_ADDRESS} from './utils';
-import {handleOwner, handleOwnerViaId, updateChainAndReturnTransactionID} from './shared';
+import {handleOwner, handleOwnerViaId, handleSpace, updateChainAndReturnTransactionID} from './shared';
 import {
   PlanetStake,
   FleetSent,
@@ -50,7 +50,7 @@ function handleReward(rewardId: BigInt, ownerId: string, planetId: string): Rewa
 
 let UINT32_MAX = BigInt.fromUnsignedBytes(Bytes.fromHexString('0xFFFFFFFF') as Bytes);
 function handleSpaceChanges(planet: Planet): void {
-  let space = getSpace();
+  let space = handleSpace();
 
   let x = planet.x;
   let y = planet.y;
@@ -151,34 +151,11 @@ function getOrCreatePlanet(id: string): Planet {
   return entity as Planet;
 }
 
-export function getSpace(): Space {
-  let space = Space.load('Space');
-  return space as Space;
-}
-
 export function handleInitialized(event: Initialized): void {
   updateChainAndReturnTransactionID(event);
-  let space = Space.load('Space');
-  if (space == null) {
-    space = new Space('Space');
-    space.address = event.address;
-    space.minX = ZERO;
-    space.maxX = ZERO;
-    space.minY = ZERO;
-    space.maxY = ZERO;
+  let space = handleSpace();
 
-    // space.stake_gas = ZERO;
-    space.stake_num = ZERO;
-
-    // space.sending_gas = ZERO;
-    space.sending_num = ZERO;
-
-    // space.resolving_gas = ZERO;
-    space.resolving_num = ZERO;
-
-    // space.exit_attempt_gas = ZERO;
-    space.exit_attempt_num = ZERO;
-  }
+  space.address = event.address;
 
   // NOTE : this actually reset, maybe only set if zero ?
   space.minX = event.params.initialSpaceExpansion;
@@ -231,7 +208,7 @@ export function handlePlanetStake(event: PlanetStake): void {
 
   handleSpaceChanges(entity);
 
-  let space = getSpace();
+  let space = handleSpace();
   // space.stake_gas = space.stake_gas.plus(event.transaction.gasLimit); //gasLimit is not gasUsed
   space.stake_num = space.stake_num.plus(ONE);
   space.save();
@@ -278,7 +255,7 @@ export function handleFleetSent(event: FleetSent): void {
   fleetSentEvent.quantity = event.params.quantity;
   fleetSentEvent.save();
 
-  let space = getSpace();
+  let space = handleSpace();
   // space.sending_gas = space.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.sending_num = space.sending_num.plus(ONE);
   space.save();
@@ -366,7 +343,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleet.won = event.params.won;
   fleet.save();
 
-  let space = getSpace();
+  let space = handleSpace();
   // space.resolving_gas = space.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.resolving_num = space.resolving_num.plus(ONE);
   space.save();
@@ -503,7 +480,7 @@ export function handleExit(event: PlanetExit): void {
   planetEntity.currentExit = planetExitEvent.id;
   planetEntity.save();
 
-  let space = getSpace();
+  let space = handleSpace();
   // space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.exit_attempt_num = space.exit_attempt_num.plus(ONE);
   space.save();
