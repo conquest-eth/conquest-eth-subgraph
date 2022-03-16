@@ -190,7 +190,7 @@ type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity 
   blockNumber: Int!
   timestamp: BigInt!
   transaction: Transaction!
-  owner: Owner!
+  owner: Owner! ## TODO fleetOwner + operator + taxLoss +
   planet: Planet!
   fleet: Fleet!
   destinationOwner: Owner!
