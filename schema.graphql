@@ -109,6 +109,8 @@ type Planet @entity {
 type Fleet @entity {
   id: ID!
   owner: Owner!
+  sender: Owner!
+  operator: Bytes!
   launchTime: BigInt!
   from: Planet!
   quantity: BigInt!
@@ -190,21 +192,27 @@ type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity 
   blockNumber: Int!
   timestamp: BigInt!
   transaction: Transaction!
-  owner: Owner! ## TODO fleetOwner + operator + taxLoss +
+  owner: Owner!
+  sender: Owner!
+  operator: Bytes!
   planet: Planet!
   fleet: Fleet!
   destinationOwner: Owner!
   gift: Boolean!
+  taxLoss: BigInt!
+  defenseAvailable: BigInt!
   fleetLoss: BigInt!
   planetLoss: BigInt!
   inFlightFleetLoss: BigInt!
   inFlightPlanetLoss: BigInt!
   won: Boolean!
+  planetActive: Boolean!
   newNumspaceships: BigInt!
   newTravelingUpkeep: BigInt!
   newOverflow: BigInt!
   accumulatedDefenseAdded: BigInt!
   accumulatedAttackAdded: BigInt!
+  numSpaceshipsAtArrival: BigInt!
 
   # extra data
   from: Planet!
@@ -231,6 +239,8 @@ type FleetSentEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   timestamp: BigInt!
   transaction: Transaction!
   owner: Owner!
+  sender: Owner!
+  operator: Bytes!
   planet: Planet!
   fleet: Fleet!
   quantity: BigInt!

@@ -230,12 +230,17 @@ export function handleFleetSent(event: FleetSent): void {
   planetEntity.overflow = event.params.newOverflow;
   planetEntity.lastUpdated = event.block.timestamp;
   planetEntity.save();
-  let sender = handleOwner(event.params.fleetOwner);
+  let fleetSender = handleOwner(event.params.fleetSender);
   // sender.sending_gas = sender.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
-  sender.sending_num = sender.sending_num.plus(ONE);
-  sender.save();
+  fleetSender.sending_num = fleetSender.sending_num.plus(ONE);
+  fleetSender.save();
 
-  fleetEntity.owner = sender.id;
+  let fleetOwner = handleOwner(event.params.fleetOwner);
+  fleetOwner.save();
+
+  fleetEntity.owner = fleetOwner.id;
+  fleetEntity.sender = fleetSender.id;
+  fleetEntity.operator = event.transaction.from;
   fleetEntity.launchTime = event.block.timestamp;
   fleetEntity.from = planetEntity.id;
   fleetEntity.quantity = event.params.quantity;
@@ -246,7 +251,9 @@ export function handleFleetSent(event: FleetSent): void {
   fleetSentEvent.blockNumber = event.block.number.toI32();
   fleetSentEvent.timestamp = event.block.timestamp;
   fleetSentEvent.transaction = transactionId;
-  fleetSentEvent.owner = sender.id;
+  fleetSentEvent.owner = fleetOwner.id;
+  fleetSentEvent.sender = fleetSender.id;
+  fleetSentEvent.operator = event.transaction.from;
   fleetSentEvent.planet = planetEntity.id;
   fleetSentEvent.fleet = fleetId;
   fleetSentEvent.newNumSpaceships = event.params.newNumSpaceships;
@@ -270,9 +277,9 @@ export function handleFleetArrived(event: FleetArrived): void {
   let fleetOwner = handleOwner(event.params.fleetOwner);
   let destinationOwner = handleOwner(event.params.destinationOwner);
 
-  planetEntity.numSpaceships = event.params.newNumspaceships;
-  planetEntity.travelingUpkeep = event.params.newTravelingUpkeep;
-  planetEntity.overflow = event.params.newOverflow;
+  planetEntity.numSpaceships = event.params.data.newNumspaceships;
+  planetEntity.travelingUpkeep = event.params.data.newTravelingUpkeep;
+  planetEntity.overflow = event.params.data.newOverflow;
   planetEntity.lastUpdated = event.block.timestamp;
   if (event.params.won) {
     if (planetEntity.stakeDeposited.gt(ZERO)) {
@@ -303,6 +310,19 @@ export function handleFleetArrived(event: FleetArrived): void {
 
   planetEntity.save();
 
+  let fleet = Fleet.load(fleetId) as Fleet; // assert it is available by then
+  fleet.resolved = true;
+  fleet.resolveTransaction = transactionId;
+  fleet.to = planetEntity.id;
+  fleet.destinationOwner = destinationOwner.id;
+  fleet.gift = event.params.gift;
+  fleet.fleetLoss = event.params.data.fleetLoss;
+  fleet.planetLoss = event.params.data.planetLoss;
+  fleet.inFlightFleetLoss = event.params.data.inFlightFleetLoss;
+  fleet.inFlightPlanetLoss = event.params.data.inFlightPlanetLoss;
+  fleet.won = event.params.won;
+  fleet.save();
+
   let fleetArrivedEvent = new FleetArrivedEvent(toEventId(event));
   fleetArrivedEvent.blockNumber = event.block.number.toI32();
   fleetArrivedEvent.timestamp = event.block.timestamp;
@@ -311,37 +331,29 @@ export function handleFleetArrived(event: FleetArrived): void {
   fleetArrivedEvent.planet = planetEntity.id;
   fleetArrivedEvent.fleet = fleetId;
   fleetArrivedEvent.destinationOwner = destinationOwner.id;
-  fleetArrivedEvent.fleetLoss = event.params.fleetLoss;
-  fleetArrivedEvent.planetLoss = event.params.planetLoss;
-  fleetArrivedEvent.inFlightFleetLoss = event.params.inFlightFleetLoss;
-  fleetArrivedEvent.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
+  fleetArrivedEvent.fleetLoss = event.params.data.fleetLoss;
+  fleetArrivedEvent.planetLoss = event.params.data.planetLoss;
+  fleetArrivedEvent.inFlightFleetLoss = event.params.data.inFlightFleetLoss;
+  fleetArrivedEvent.inFlightPlanetLoss = event.params.data.inFlightPlanetLoss;
   fleetArrivedEvent.won = event.params.won;
   fleetArrivedEvent.gift = event.params.gift;
+  fleetArrivedEvent.sender = fleet.sender;
+  fleetArrivedEvent.planetActive = planetEntity.active;
+  fleetArrivedEvent.operator = fleet.operator;
+  fleetArrivedEvent.taxLoss = event.params.data.taxLoss;
+  fleetArrivedEvent.numSpaceshipsAtArrival = event.params.data.numSpaceshipsAtArrival;
 
   // TODO rename newNumspaceships?
-  fleetArrivedEvent.newNumspaceships = event.params.newNumspaceships;
-  fleetArrivedEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
-  fleetArrivedEvent.newOverflow = event.params.newOverflow;
-  fleetArrivedEvent.accumulatedDefenseAdded = event.params.accumulatedDefenseAdded;
-  fleetArrivedEvent.accumulatedAttackAdded = event.params.accumulatedAttackAdded;
+  fleetArrivedEvent.newNumspaceships = event.params.data.newNumspaceships;
+  fleetArrivedEvent.newTravelingUpkeep = event.params.data.newTravelingUpkeep;
+  fleetArrivedEvent.newOverflow = event.params.data.newOverflow;
+  fleetArrivedEvent.accumulatedDefenseAdded = event.params.data.accumulatedDefenseAdded;
+  fleetArrivedEvent.accumulatedAttackAdded = event.params.data.accumulatedAttackAdded;
 
   // extra data
   fleetArrivedEvent.from = fleetEntity.from;
   fleetArrivedEvent.quantity = fleetEntity.quantity;
   fleetArrivedEvent.save();
-
-  let fleet = Fleet.load(fleetId) as Fleet; // assert it is available by then
-  fleet.resolved = true;
-  fleet.resolveTransaction = transactionId;
-  fleet.to = planetEntity.id;
-  fleet.destinationOwner = destinationOwner.id;
-  fleet.gift = event.params.gift;
-  fleet.fleetLoss = event.params.fleetLoss;
-  fleet.planetLoss = event.params.planetLoss;
-  fleet.inFlightFleetLoss = event.params.inFlightFleetLoss;
-  fleet.inFlightPlanetLoss = event.params.inFlightPlanetLoss;
-  fleet.won = event.params.won;
-  fleet.save();
 
   let space = handleSpace();
   // space.resolving_gas = space.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
