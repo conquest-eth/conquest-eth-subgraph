@@ -200,7 +200,6 @@ type FleetArrivedEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity 
   destinationOwner: Owner!
   gift: Boolean!
   taxLoss: BigInt!
-  defenseAvailable: BigInt!
   fleetLoss: BigInt!
   planetLoss: BigInt!
   inFlightFleetLoss: BigInt!

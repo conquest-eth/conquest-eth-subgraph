@@ -23,7 +23,6 @@ import {
   FleetArrivedEvent,
   TravelingUpkeepReductionFromDestructionEvent,
   PlanetExitEvent,
-  Space,
   ExitCompleteEvent,
   StakeToWithdrawEvent,
   RewardSetupEvent,
