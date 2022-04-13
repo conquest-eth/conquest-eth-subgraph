@@ -257,7 +257,7 @@ type StakeToWithdrawEvent implements OwnerEvent @entity {
   newStake: BigInt!
 }
 
-type TravelingUpkeepReductionFromDestructionEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
+type TravelingUpkeepRefundEvent implements OwnerEvent & PlanetEvent & FleetEvent @entity {
   id: ID! # <blockNumber>_logID
   blockNumber: Int!
   timestamp: BigInt!

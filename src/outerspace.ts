@@ -6,7 +6,7 @@ import {
   PlanetStake,
   FleetSent,
   FleetArrived,
-  TravelingUpkeepReductionFromDestruction,
+  TravelingUpkeepRefund,
   StakeToWithdraw,
   PlanetExit,
   ExitComplete,
@@ -21,7 +21,7 @@ import {
   Fleet,
   FleetSentEvent,
   FleetArrivedEvent,
-  TravelingUpkeepReductionFromDestructionEvent,
+  TravelingUpkeepRefundEvent,
   PlanetExitEvent,
   ExitCompleteEvent,
   StakeToWithdrawEvent,
@@ -402,7 +402,7 @@ export function handlePlanetTransfer(event: PlanetTransfer): void {
   planetTransferEvent.save();
 }
 
-export function handleTravelingUpkeepReductionFromDestruction(event: TravelingUpkeepReductionFromDestruction): void {
+export function handleTravelingUpkeepRefund(event: TravelingUpkeepRefund): void {
   let transactionId = updateChainAndReturnTransactionID(event);
   let fleetId = toFleetId(event.params.fleet);
   let planetId = toPlanetId(event.params.origin);
@@ -417,20 +417,20 @@ export function handleTravelingUpkeepReductionFromDestruction(event: TravelingUp
 
   planetEntity.save();
 
-  let travelingUpkeepDestructionEvent = new TravelingUpkeepReductionFromDestructionEvent(toEventId(event));
-  travelingUpkeepDestructionEvent.blockNumber = event.block.number.toI32();
-  travelingUpkeepDestructionEvent.timestamp = event.block.timestamp;
-  travelingUpkeepDestructionEvent.transaction = transactionId;
-  travelingUpkeepDestructionEvent.owner = fleetOwner;
-  travelingUpkeepDestructionEvent.planet = planetEntity.id;
-  travelingUpkeepDestructionEvent.fleet = fleetId;
+  let travelingUpkeepRefundEvent = new TravelingUpkeepRefundEvent(toEventId(event));
+  travelingUpkeepRefundEvent.blockNumber = event.block.number.toI32();
+  travelingUpkeepRefundEvent.timestamp = event.block.timestamp;
+  travelingUpkeepRefundEvent.transaction = transactionId;
+  travelingUpkeepRefundEvent.owner = fleetOwner;
+  travelingUpkeepRefundEvent.planet = planetEntity.id;
+  travelingUpkeepRefundEvent.fleet = fleetId;
 
   // TODO rename newNumspaceships?
-  travelingUpkeepDestructionEvent.newNumspaceships = event.params.newNumspaceships;
-  travelingUpkeepDestructionEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
-  travelingUpkeepDestructionEvent.newOverflow = event.params.newOverflow;
+  travelingUpkeepRefundEvent.newNumspaceships = event.params.newNumspaceships;
+  travelingUpkeepRefundEvent.newTravelingUpkeep = event.params.newTravelingUpkeep;
+  travelingUpkeepRefundEvent.newOverflow = event.params.newOverflow;
 
-  travelingUpkeepDestructionEvent.save();
+  travelingUpkeepRefundEvent.save();
 }
 
 // TODO remove, use to test a deployment without affecting game play, not sure it is a good idea, due to events, etc,
