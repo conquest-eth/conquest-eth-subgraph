@@ -30,7 +30,7 @@ dataSources:
         - name: OuterSpaceContract
           file: ./abis/OuterSpace.json
       eventHandlers:
-        - event: PlanetStake(indexed address,indexed uint256,uint32,int40,uint32,uint256)
+        - event: PlanetStake(indexed address,indexed uint256,uint32,int40,uint32,uint256,bool)
           handler: handlePlanetStake
         - event: FleetSent(indexed address,indexed address,indexed uint256,address,uint256,uint32,uint32,int40,uint32)
           handler: handleFleetSent
@@ -42,7 +42,7 @@ dataSources:
           handler: handlePlanetReset
         - event: PlanetExit(indexed address,indexed uint256)
           handler: handleExit
-        - event: StakeToWithdraw(indexed address,uint256)
+        - event: StakeToWithdraw(indexed address,uint256,bool)
           handler: handleStakeToWithdraw
         - event: ExitComplete(indexed address,indexed uint256,uint256)
           handler: handleExitComplete
@@ -56,12 +56,12 @@ dataSources:
           handler: handlePlanetTransfer
       file: ./src/outerspace.ts
   - kind: ethereum/contract
-    name: ConquestToken
+    name: PlayToken
     network: {{chainName}}
     source:
-      address: '{{contracts.ConquestToken.address}}'
-      abi: ConquestToken_Contract
-      startBlock: {{contracts.ConquestToken.receipt.blockNumber}}
+      address: '{{contracts.PlayToken.address}}'
+      abi: PlayToken_Contract
+      startBlock: {{contracts.PlayToken.receipt.blockNumber}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -70,12 +70,33 @@ dataSources:
         - Owner
         - Chain
       abis:
-        - name: ConquestToken_Contract
-          file: ./abis/ConquestToken.json
+        - name: PlayToken_Contract
+          file: ./abis/PlayToken.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTokenTransfer
-      file: ./src/token.ts
+          handler: handlePlayTokenTransfer
+      file: ./src/play_token.ts
+  - kind: ethereum/contract
+    name: FreePlayToken
+    network: {{chainName}}
+    source:
+      address: '{{contracts.FreePlayToken.address}}'
+      abi: FreePlayToken_Contract
+      startBlock: {{contracts.FreePlayToken.receipt.blockNumber}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Owner
+        - Chain
+      abis:
+        - name: FreePlayToken_Contract
+          file: ./abis/FreePlayToken.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleFreePlayTokenTransfer
+      file: ./src/free_play_token.ts
   - kind: ethereum/contract
     name: AllianceRegistry
     network: {{chainName}}

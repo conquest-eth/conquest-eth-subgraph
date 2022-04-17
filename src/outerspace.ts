@@ -109,6 +109,7 @@ function getOrCreatePlanet(id: string): Planet {
   entity.rewardGiver = '';
   entity.stakeDeposited = ZERO;
   entity.owner = '';
+  entity.flagTime = ZERO;
 
   let yString = id.slice(0, 34);
   let xString = '0x' + id.slice(34);
@@ -191,6 +192,10 @@ export function handlePlanetStake(event: PlanetStake): void {
   entity.lastAcquired = event.block.timestamp;
   entity.exitTime = ZERO;
   entity.stakeDeposited = event.params.stake;
+  entity.flagTime = ZERO;
+  if (event.params.freegift) {
+    entity.flagTime = event.block.timestamp;
+  }
   entity.save();
 
   let planetStakeEvent = new PlanetStakeEvent(toEventId(event));

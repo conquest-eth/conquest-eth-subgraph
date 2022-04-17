@@ -20,11 +20,9 @@ type Owner @entity {
   totalStaked: BigInt!
   currentStake: BigInt!
   totalCollected: BigInt!
-  tokenBalance: BigInt!
+  playTokenBalance: BigInt!
+  freePlayTokenBalance: BigInt!
   tokenToWithdraw: BigInt!
-  tokenGiven: BigInt!
-
-  introducer: Owner
 
   # stake_gas: BigInt! //https://github.com/graphprotocol/graph-node/issues/2619
   stake_num: BigInt!
@@ -92,6 +90,7 @@ type Planet @entity {
   departedFleets: [Fleet!]! @derivedFrom(field: "from")
   events: [PlanetEvent!]! @derivedFrom(field: "planet")
   rewards: [Reward!]! @derivedFrom(field: "planet")
+  flagTime: BigInt!
 
   stakeDeposited: BigInt!
 
