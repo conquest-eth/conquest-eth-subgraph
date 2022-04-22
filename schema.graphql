@@ -71,6 +71,28 @@ type Space @entity {
 
   exit_attempt_gas: BigInt!
   exit_attempt_num: BigInt!
+
+  # numPlanetsTouched: BigInt! # track num planet touched, as well as staked once
+
+  totalStaked: BigInt!
+  currentStake: BigInt!
+
+  numPlanetsStaked: BigInt!
+  numPlanetsStakedOnce: BigInt!
+
+  numFleetsLaunched: BigInt!
+  numFleetsResolved: BigInt!
+
+  numPlanetsExitFinalized: BigInt!
+  numPlanetsWithExit: BigInt!
+
+  # totalCollected: BigInt!
+  # playTokenInCirculation: BigInt!
+  # playTokenInGame: BigInt!
+  # freePlayTokenInCirculation: BigInt!
+  # feeePlayTokenInGame: BigInt!
+
+  # tokenToWithdraw: BigInt!
 }
 
 type Planet @entity {

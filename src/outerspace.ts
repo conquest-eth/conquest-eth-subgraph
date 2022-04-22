@@ -215,6 +215,10 @@ export function handlePlanetStake(event: PlanetStake): void {
   let space = handleSpace();
   // space.stake_gas = space.stake_gas.plus(event.transaction.gasLimit); //gasLimit is not gasUsed
   space.stake_num = space.stake_num.plus(ONE);
+  space.currentStake = space.currentStake.plus(event.params.stake);
+  space.totalStaked = space.totalStaked.plus(event.params.stake);
+  space.numPlanetsStakedOnce = space.numPlanetsStakedOnce.plus(ONE);
+  space.numPlanetsStaked = space.numPlanetsStaked.plus(ONE);
   space.save();
 }
 
@@ -269,6 +273,7 @@ export function handleFleetSent(event: FleetSent): void {
   let space = handleSpace();
   // space.sending_gas = space.sending_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.sending_num = space.sending_num.plus(ONE);
+  space.numFleetsLaunched = space.numFleetsLaunched.plus(ONE);
   space.save();
 }
 
@@ -362,6 +367,7 @@ export function handleFleetArrived(event: FleetArrived): void {
   let space = handleSpace();
   // space.resolving_gas = space.resolving_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.resolving_num = space.resolving_num.plus(ONE);
+  space.numFleetsResolved = space.numFleetsResolved.plus(ONE);
   space.save();
 }
 
@@ -499,6 +505,9 @@ export function handleExit(event: PlanetExit): void {
   let space = handleSpace();
   // space.exit_attempt_gas = space.exit_attempt_gas.plus(event.transaction.gasLimit);//gasLimit is not gasUsed
   space.exit_attempt_num = space.exit_attempt_num.plus(ONE);
+  space.numPlanetsWithExit = space.numPlanetsWithExit.plus(ONE);
+  space.currentStake = space.currentStake.minus(planetEntity.stakeDeposited);
+  space.numPlanetsStaked = space.numPlanetsStaked.minus(ONE);
   space.save();
 }
 
@@ -533,6 +542,13 @@ export function handleExitComplete(event: ExitComplete): void {
   exitCompleteEvent.planet = planetEntity.id;
   exitCompleteEvent.stake = event.params.stake;
   exitCompleteEvent.save();
+
+  let space = handleSpace();
+  space.numPlanetsWithExit = space.numPlanetsWithExit.minus(ONE);
+  space.numPlanetsExitFinalized = space.numPlanetsExitFinalized.plus(ONE);
+  space.currentStake = space.currentStake.minus(planetEntity.stakeDeposited);
+  space.numPlanetsStaked = space.numPlanetsStaked.minus(ONE);
+  space.save();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -24,6 +24,26 @@ export function handleSpace(): Space {
 
     space.exit_attempt_gas = ZERO;
     space.exit_attempt_num = ZERO;
+
+    space.totalStaked = ZERO;
+    space.currentStake = ZERO;
+
+    space.numPlanetsStaked = ZERO;
+    space.numPlanetsStakedOnce = ZERO;
+
+    space.numFleetsLaunched = ZERO;
+    space.numFleetsResolved = ZERO;
+
+    space.numPlanetsExitFinalized = ZERO;
+    space.numPlanetsWithExit = ZERO;
+    // space.totalCollected = ZERO;
+    // space.playTokenInCirculation = ZERO;
+    // space.playTokenInGame = ZERO;
+    // space.freePlayTokenInCirculation = ZERO;
+    // space.feeePlayTokenInGame = ZERO;
+
+    // space.tokenToWithdraw = ZERO;
+
     space.save();
   }
   return space as Space;
